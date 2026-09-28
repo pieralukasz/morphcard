@@ -1,13 +1,22 @@
 "use client";
 /**
  * A scrubbable timeline for the Anatomy page. It starts a real transition on
- * the live demo, pauses every animation the library created, and seeks them
- * all to the slider's time. The bars are computed from the library's own
- * `defaults` and `choreography`, so the numbers cannot drift from the code.
+ * the phone demo, pauses every animation the library created, and seeks them
+ * all to the slider's time.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type DemoHandle, LiveDemo, Toggle } from "@/components/live-demo";
-import { choreography, defaults } from "../../../src/index";
+
+/**
+ * The library's default timing (src/morph.ts: defaults and choreography),
+ * copied here because the docs use only the public hook. The chart's total
+ * comes from the real animations, so a drift shows up as a mismatch.
+ */
+const defaults = { duration: { open: 400, close: 300 }, stagger: 45, backgroundScale: 0.96 } as const;
+const choreography = {
+  open: { contentDelay: 0.325, content: 0.65, copyOut: 0.4, targetIn: 0.5, restOut: 0.35, dockDelay: 0.4, dock: 0.75 },
+  close: { copyIn: 0.37, targetOut: 0.3, restDelay: 0.5, rest: 0.5, contentOut: 0.37, dock: 0.6 },
+} as const;
 
 type Phase = "open" | "close";
 
@@ -101,7 +110,7 @@ export function Timeline() {
       cancelAnimationFrame(frame.current);
       setPlaying(false);
       const need = p === "open" ? "closed" : "open";
-      if (d.morph.state !== need) {
+      if (d.state !== need) {
         const reached = need === "open" ? d.open(CARD) : d.close();
         finishAll();
         await reached;
@@ -127,7 +136,7 @@ export function Timeline() {
     armedFor.current === phase &&
     anims.current.length > 0 &&
     anims.current.every((a) => a.playState === "paused") &&
-    demo.current?.morph.state === (phase === "open" ? "opening" : "closing");
+    demo.current?.state === (phase === "open" ? "opening" : "closing");
 
   const seek = async (ms: number) => {
     if (!live() && !(await arm(phase))) return;
@@ -189,7 +198,9 @@ export function Timeline() {
 
   return (
     <div className="not-prose mct" ref={wrap}>
+      <div className="mct-grid">
       <LiveDemo
+        controls={false}
         options={{ timeScale: 1, reducedMotion: allowMotion ? false : "system" }}
         onReady={(d) => {
           demo.current = d;
@@ -218,7 +229,7 @@ export function Timeline() {
           </p>
         ) : null}
 
-        <div className="mct-chart" style={{ ["--mct-t" as string]: pct(t) }}>
+        <div className="mct-chart" style={{ ["--mct-p" as string]: String(Math.min(1, t / scale)) }}>
           <div className="mct-axis" aria-hidden="true">
             {Array.from({ length: Math.floor(scale / 100) + 1 }, (_, i) => (
               <span key={i} style={{ left: pct(i * 100) }}>
@@ -280,7 +291,8 @@ export function Timeline() {
             {Math.round(t)} <small>/ {Math.round(total)} ms</small>
           </output>
         </div>
-        <p className="mct-help">Drag to scrub. The demo on the left is paused at that moment of a real transition.</p>
+        <p className="mct-help">Drag to scrub. The demo is paused at that moment of a real transition, and the bars show what is moving.</p>
+      </div>
       </div>
     </div>
   );

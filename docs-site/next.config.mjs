@@ -4,8 +4,8 @@ import { createMDX } from "fumadocs-mdx/next";
 
 const withMDX = createMDX();
 
-// The live demo imports the library source and the demo from the repository
-// root (../src, ../examples), so the build root is one level up.
+// The site builds the library from its source (../src) and reuses the demo
+// data and styles in ../examples, so the build root is one level up.
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 // Empty on Vercel. Set it to serve the static export from a sub-path.
@@ -22,6 +22,11 @@ const config = {
   outputFileTracingRoot: repoRoot,
   turbopack: {
     root: repoRoot,
+    // The site uses the library the way an app would, by package name, but
+    // builds it from the source in this repository (tsconfig paths match).
+    resolveAlias: {
+      "react-morphcard": "../src/index.ts",
+    },
   },
 };
 

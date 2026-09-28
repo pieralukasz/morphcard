@@ -18,6 +18,9 @@ const LANG_LABEL: Record<string, string> = {
   html: "HTML",
 };
 
+/** Both themes as CSS variables; fumadocs' shiki.css picks one per site theme. */
+const THEMES = { themes: { light: "github-light", dark: "github-dark" }, defaultColor: false } as const;
+
 export function readSnippet(file: string) {
   return readFileSync(join(process.cwd(), "snippets", file), "utf8").trimEnd();
 }
@@ -42,8 +45,8 @@ export async function CodeCard({
   const lang = ext === "js" ? "js" : ext;
   const lines = source.split("\n");
   const [preview, full] = await Promise.all([
-    highlight(lines.slice(0, previewLines).join("\n"), { lang }),
-    highlight(source, { lang }),
+    highlight(lines.slice(0, previewLines).join("\n"), { lang, ...THEMES }),
+    highlight(source, { lang, ...THEMES }),
   ]);
   return (
     <CodeCardClient

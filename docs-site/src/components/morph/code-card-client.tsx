@@ -6,6 +6,7 @@
  */
 import type { ReactNode } from "react";
 import { useStage } from "./stage";
+import { Arrow } from "./tile";
 
 export interface CodeCardProps {
   file: string;
@@ -33,7 +34,7 @@ export function CodeCardClient({ file, lang, note, preview, full, source, lines,
         onClick={(e) =>
           stage.open(e.currentTarget.parentElement, {
             label: file,
-            wide: true,
+            kind: "code",
             render: () => <CodeSheet {...{ file, lang, note, full, source, lines, children }} />,
           })
         }
@@ -47,14 +48,12 @@ export function CodeCardClient({ file, lang, note, preview, full, source, lines,
         </span>
       </div>
       {note ? <p className="mcs-code-note">{note}</p> : null}
-      <div className="mcs-code is-preview" data-morph="code">
+      <div className="mcs-code is-preview" data-morph="code" aria-hidden="true">
         {preview}
       </div>
       <span className="mcs-more" aria-hidden="true">
-        {lines} lines
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+        Show all {lines} lines
+        <Arrow />
       </span>
     </article>
   );
@@ -103,7 +102,9 @@ function CopyButton({ source }: { source: string }) {
       }}
     >
       <span className="is-idle">Copy</span>
-      <span className="is-done">Copied</span>
+      <span className="is-done" aria-live="polite">
+        Copied
+      </span>
     </button>
   );
 }

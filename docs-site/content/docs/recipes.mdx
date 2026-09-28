@@ -7,34 +7,39 @@ description: List to detail page, a photo gallery and a wallet-style card, with 
 
 Update the URL when the sheet opens and closes, and open without a flight when the page loads on a detail URL.
 
-```js
-const morph = createMorph({
-  sheet,
-  background: list,
-  scrim,
-  prepare(card) {
-    const id = card?.dataset.id ?? idFromUrl();
-    render(id);
-  },
-  onStateChange(state, card) {
-    if (state === "opening" && card) history.pushState({ id: card.dataset.id }, "", `/deliveries/${card.dataset.id}`);
-  },
-});
+```tsx
+import { useEffect, useState } from "react";
+import { useMorph } from "react-morphcard";
 
-// Deep link: no card, so the sheet fades in.
-if (idFromUrl()) morph.open(null);
+function Deliveries() {
+  const [id, setId] = useState<string | null>(null);
+  const morph = useMorph({
+    onStateChange(state, card) {
+      if (state === "opening" && card) history.pushState({ id: card.dataset.id }, "", `/deliveries/${card.dataset.id}`);
+    },
+  });
 
-window.addEventListener("popstate", () => {
-  if (!idFromUrl()) morph.close();
-});
-// The Back button has no data-morph-close: it goes through history.
-sheet.querySelector(".back").addEventListener("click", () => history.back());
+  useEffect(() => {
+    // Deep link: no card, so the sheet fades in.
+    const fromUrl = idFromUrl();
+    if (fromUrl) morph.open(null, () => setId(fromUrl));
+    const onPop = () => {
+      if (!idFromUrl()) morph.close();
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // ...cards call morph.open(event.currentTarget, () => setId(delivery.id)).
+  // The Back button has no data-morph-close: it goes through history.
+  // <button onClick={() => history.back()}>Back</button>
+}
 ```
 
 If the list re-renders while the sheet is open, the original card element is gone. Pass the new one when closing:
 
-```js
-morph.close({ to: list.querySelector(`[data-id="${id}"]`) });
+```tsx
+morph.close({ to: listRef.current?.querySelector(`[data-id="${id}"]`) ?? null });
 ```
 
 If it is not in the list any more, pass `{ to: null }` and the sheet fades out.
@@ -43,16 +48,16 @@ If it is not in the list any more, pass `{ to: null }` and the sheet fades out.
 
 Images fly by width. Mark the thumbnail and the large image with the same key:
 
-```html
-<button class="tile" data-i="3">
-  <img data-morph="photo" src="thumb-3.jpg" alt="Harbour at dawn" />
-  <span data-morph="caption">Harbour at dawn</span>
+```tsx
+<button className="tile" onClick={(e) => morph.open(e.currentTarget, () => setPhoto(p))}>
+  <img data-morph="photo" src={p.thumb} alt={p.alt} />
+  <span data-morph="caption">{p.caption}</span>
 </button>
 
-<section class="sheet" role="dialog" aria-label="Photo">
-  <img data-morph="photo" src="" alt="" />
-  <h2 data-morph="caption"></h2>
-  <p data-morph-stagger>…</p>
+<section ref={morph.sheetRef} className="sheet" role="dialog" aria-label="Photo" hidden>
+  <img data-morph="photo" src={photo?.large} alt="" />
+  <h2 data-morph="caption">{photo?.caption}</h2>
+  <p data-morph-stagger>{photo?.story}</p>
   <button data-morph-close data-morph-stagger>Close</button>
 </section>
 ```
@@ -79,10 +84,8 @@ A payment card that lifts into a full screen with its details. The card and the 
 }
 ```
 
-```js
-createMorph({
-  sheet: document.querySelector(".pass-sheet"),
-  background: document.querySelector(".wallet"),
+```tsx
+const morph = useMorph({
   duration: { open: 460, close: 320 },
   backgroundScale: 0.94,
 });
@@ -92,8 +95,8 @@ The clip starts with the card's 20 px corners and ends at the sheet's own radius
 
 ## Slower for a demo or a review
 
-```js
-morph.setOptions({ timeScale: 4 });
+```tsx
+const morph = useMorph({ timeScale: 4 });
 ```
 
-Everything, including the stagger, plays four times slower. The recordings on this site were made with the frame-by-frame recorder in `scripts/record.mjs`, which pauses every animation and steps it 1/60 s at a time.
+Everything, including the stagger, plays four times slower. Options are read on every render, so a toggle in state works too: `useMorph({ timeScale: slow ? 4 : 1 })`. The [playground](/docs/playground) does exactly that for this site's own cards. The recordings on this site were made with the frame-by-frame recorder in `scripts/record.mjs`, which pauses every animation and steps it 1/60 s at a time.

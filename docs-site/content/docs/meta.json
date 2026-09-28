@@ -1,9 +1,10 @@
 {
-  "title": "morphcard",
+  "title": "react-morphcard",
   "pages": [
     "index",
     "getting-started",
     "api",
+    "playground",
     "---How it works---",
     "anatomy",
     "interruptions",

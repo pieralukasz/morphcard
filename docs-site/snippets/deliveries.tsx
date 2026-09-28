@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMorph } from "morphcard/react";
+import { useMorph } from "react-morphcard";
 
 type Delivery = { id: string; route: string; company: string; status: string };
 

@@ -1,17 +1,21 @@
 "use client";
 /**
- * The playground: the live demo with controls bound to the real options.
- * Every change goes through morph.setOptions on the running instance.
+ * The playground. Its controls change the options of the useMorph hooks on
+ * this page: the page's own sheet (the tiles below) and the phone demo. What
+ * you see after changing a value is exactly what that option does.
  */
-import { useMemo, useState } from "react";
-import { LiveDemo, Toggle } from "@/components/live-demo";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { LiveDemo, StateLabel, Toggle } from "@/components/live-demo";
+import { MORPH_DEFAULTS, type MorphTuning } from "@/components/morph/defaults";
+import { useStage } from "@/components/morph/stage";
+import { MorphTile } from "@/components/morph/tile";
 
 const EASINGS = {
   surface: [
     ["cubic-bezier(0.32, 0.72, 0, 1)", "Default: fast start, long soft landing"],
     ["cubic-bezier(0.2, 0, 0, 1)", "Emphasized: stronger landing"],
     ["cubic-bezier(0.16, 1, 0.3, 1)", "Expo out: almost all motion up front"],
-    ["ease-out", "CSS ease-out"],
+    ["cubic-bezier(0.77, 0, 0.175, 1)", "Ease in-out: slow start and end"],
     ["linear", "Linear, for comparison"],
   ],
   content: [
@@ -22,66 +26,67 @@ const EASINGS = {
   ],
 } as const;
 
-const DEFAULTS = {
-  open: 400,
-  close: 300,
-  stagger: 45,
-  backgroundScale: 0.96,
-  surface: EASINGS.surface[0][0] as string,
-  content: EASINGS.content[0][0] as string,
+const START = {
+  open: MORPH_DEFAULTS.duration.open,
+  close: MORPH_DEFAULTS.duration.close,
+  stagger: MORPH_DEFAULTS.stagger,
+  scale: true,
+  surface: MORPH_DEFAULTS.easing.surface as string,
+  content: MORPH_DEFAULTS.easing.content as string,
 };
 
+const i = (d: string) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d={d} />
+  </svg>
+);
+
 export function Playground() {
-  const [v, setV] = useState(DEFAULTS);
+  const stage = useStage();
+  const [v, setV] = useState(START);
   const [slow, setSlow] = useState(false);
   const [reduce, setReduce] = useState(false);
-  const [theme, setTheme] = useState<"site" | "light" | "dark">("site");
-  const [state, setState] = useState("closed");
-  const set = <K extends keyof typeof DEFAULTS>(key: K, value: (typeof DEFAULTS)[K]) => setV((old) => ({ ...old, [key]: value }));
+  const [demoState, setDemoState] = useState("closed");
+  const set = <K extends keyof typeof START>(key: K, value: (typeof START)[K]) => setV((old) => ({ ...old, [key]: value }));
 
-  const options = useMemo(
+  const options = useMemo<MorphTuning>(
     () => ({
       duration: { open: v.open, close: v.close },
       easing: { surface: v.surface, content: v.content },
       stagger: v.stagger,
-      backgroundScale: v.backgroundScale === 1 ? false : v.backgroundScale,
+      backgroundScale: v.scale ? MORPH_DEFAULTS.backgroundScale : false,
       timeScale: slow ? 4 : 1,
       reducedMotion: reduce ? true : "system",
     }),
     [v, slow, reduce],
   );
 
+  // The page's own sheet follows the controls; leaving the page restores the defaults.
+  const { configure } = stage;
+  useEffect(() => configure(options), [configure, options]);
+  useEffect(() => () => configure(null), [configure]);
+
   const code = useMemo(() => {
     const lines: string[] = [];
-    if (v.open !== DEFAULTS.open || v.close !== DEFAULTS.close) lines.push(`  duration: { open: ${v.open}, close: ${v.close} },`);
-    if (v.surface !== DEFAULTS.surface || v.content !== DEFAULTS.content) {
+    if (v.open !== START.open || v.close !== START.close) lines.push(`  duration: { open: ${v.open}, close: ${v.close} },`);
+    if (v.surface !== START.surface || v.content !== START.content) {
       lines.push(`  easing: {\n    surface: "${v.surface}",\n    content: "${v.content}",\n  },`);
     }
-    if (v.stagger !== DEFAULTS.stagger) lines.push(`  stagger: ${v.stagger},`);
-    if (v.backgroundScale !== DEFAULTS.backgroundScale) lines.push(`  backgroundScale: ${v.backgroundScale === 1 ? "false" : v.backgroundScale},`);
-    if (reduce) lines.push(`  reducedMotion: true,`);
-    if (slow) lines.push(`  timeScale: 4, // for review only`);
-    return lines.length ? `useMorph({\n${lines.join("\n")}\n});` : "useMorph(); // the defaults";
+    if (v.stagger !== START.stagger) lines.push(`  stagger: ${v.stagger},`);
+    if (!v.scale) lines.push("  backgroundScale: false,");
+    if (reduce) lines.push("  reducedMotion: true,");
+    if (slow) lines.push("  timeScale: 4, // for review only");
+    return lines.length ? `const morph = useMorph({\n${lines.join("\n")}\n});` : "const morph = useMorph(); // the defaults";
   }, [v, slow, reduce]);
 
   return (
-    <div className="not-prose mcp-play">
-      <LiveDemo options={options} theme={theme} onState={setState} hint="Tap a card" />
+    <div className="not-prose mcp">
       <div className="mcp-panel">
         <fieldset className="mcp-group">
           <legend>Duration</legend>
           <Range label="Open" unit="ms" min={150} max={1200} step={10} value={v.open} onChange={(n) => set("open", n)} />
           <Range label="Close" unit="ms" min={120} max={1000} step={10} value={v.close} onChange={(n) => set("close", n)} />
           <Range label="Stagger" unit="ms" min={0} max={150} step={5} value={v.stagger} onChange={(n) => set("stagger", n)} />
-          <Range
-            label="List scale"
-            min={0.9}
-            max={1}
-            step={0.01}
-            value={v.backgroundScale}
-            format={(n) => (n === 1 ? "off" : n.toFixed(2))}
-            onChange={(n) => set("backgroundScale", n)}
-          />
         </fieldset>
         <fieldset className="mcp-group">
           <legend>Easing</legend>
@@ -89,44 +94,95 @@ export function Playground() {
           <Select label="Content" value={v.content} options={EASINGS.content} onChange={(s) => set("content", s)} />
         </fieldset>
         <fieldset className="mcp-group is-row">
-          <legend>View</legend>
+          <legend>Motion</legend>
+          <Toggle on={v.scale} onClick={() => set("scale", !v.scale)}>
+            Background scale
+          </Toggle>
           <Toggle on={slow} onClick={() => setSlow((x) => !x)}>
             4× slower
           </Toggle>
           <Toggle on={reduce} onClick={() => setReduce((x) => !x)}>
             Reduced motion
           </Toggle>
-          <div className="mcp-seg" role="group" aria-label="Demo theme">
-            {(["site", "light", "dark"] as const).map((t) => (
-              <button key={t} type="button" aria-pressed={theme === t} onClick={() => setTheme(t)}>
-                {t === "site" ? "Site" : t === "light" ? "Light" : "Dark"}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <div className="mcp-foot">
-          <span className="mcp-state" aria-live="polite">
-            state <code data-state={state}>{state}</code>
-          </span>
           <button
             type="button"
-            className="mcp-reset"
+            className="mc-toggle mcp-reset"
             onClick={() => {
-              setV(DEFAULTS);
+              setV(START);
               setSlow(false);
               setReduce(false);
-              setTheme("site");
             }}
           >
             Reset
           </button>
-        </div>
+        </fieldset>
         <pre className="mcp-code">
           <code>{code}</code>
         </pre>
       </div>
+
+      <div className="mcp-stage">
+        <h2 className="mcp-heading">Tiles on this page</h2>
+        <p className="mcp-help">These open into the page's own panel, with the options above.</p>
+        <div className="mcs-grid is-features">
+          <MorphTile
+            kicker="Duration"
+            title="How long each way"
+            icon={i("M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z")}
+            summary={<p>Open and close are separate. Closing is usually shorter.</p>}
+            more="Try it"
+            detail={explain(options, "duration")}
+          />
+          <MorphTile
+            kicker="Easing"
+            title="How the speed changes"
+            icon={i("M3 20c6 0 8-16 18-16")}
+            summary={<p>The surface curve drives the clip, the flights and the background.</p>}
+            more="Try it"
+            detail={explain(options, "easing")}
+          />
+          <MorphTile
+            kicker="Stagger"
+            title="Blocks one after another"
+            icon={i("M4 6h10M4 12h13M4 18h16")}
+            summary={<p>Each block below the header starts a little after the one above it.</p>}
+            more="Try it"
+            detail={explain(options, "stagger")}
+          />
+        </div>
+      </div>
+
+      <div className="mcp-demo">
+        <div>
+          <h2 className="mcp-heading">The phone demo</h2>
+          <p className="mcp-help">Same options, a second hook inside the frame.</p>
+        </div>
+        <LiveDemo options={options} onState={setDemoState} controls={false} />
+        <StateLabel state={demoState} />
+      </div>
     </div>
   );
+}
+
+function explain(options: MorphTuning, topic: "duration" | "easing" | "stagger"): ReactNode[] {
+  const blocks: [string, ReactNode][] = [
+    ["Now", <code key="c">{topic === "duration" ? `open ${options.duration?.open} ms, close ${options.duration?.close} ms` : topic === "easing" ? options.easing?.surface : `${options.stagger} ms`}</code>],
+    [
+      "What moves",
+      topic === "duration"
+        ? "Every part of the transition is a fraction of these two numbers, so changing them keeps the proportions."
+        : topic === "easing"
+          ? "The surface curve shapes the clip, the flying title and the page behind. The content curve shapes the blocks below."
+          : "Each block of this panel, like this one, starts that many milliseconds after the previous one.",
+    ],
+    ["Try", "Change the value on the left, then open this tile again. Slow motion makes the difference easy to see."],
+    ["Default", topic === "duration" ? "400 ms to open, 300 ms to close." : topic === "easing" ? "cubic-bezier(0.32, 0.72, 0, 1) for the surface." : "45 ms."],
+  ];
+  return blocks.map(([label, text]) => (
+    <p key={label}>
+      <b>{label}.</b> {text}
+    </p>
+  ));
 }
 
 function Range({
@@ -136,7 +192,6 @@ function Range({
   max,
   step,
   value,
-  format,
   onChange,
 }: {
   label: string;
@@ -145,7 +200,6 @@ function Range({
   max: number;
   step: number;
   value: number;
-  format?: (n: number) => string;
   onChange: (n: number) => void;
 }) {
   return (
@@ -153,8 +207,8 @@ function Range({
       <span className="mcp-label">{label}</span>
       <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.currentTarget.value))} />
       <output className="mcp-value">
-        {format ? format(value) : value}
-        {unit && !format ? <small> {unit}</small> : null}
+        {value}
+        {unit ? <small> {unit}</small> : null}
       </output>
     </label>
   );
@@ -181,7 +235,6 @@ function Select({
           </option>
         ))}
       </select>
-      <code className="mcp-curve">{value}</code>
     </label>
   );
 }
