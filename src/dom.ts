@@ -2,7 +2,7 @@
  * DOM helpers: measuring what is on screen, finding marked elements, and
  * undoing every attribute or inline style the library sets.
  */
-import { type Box, intersect, lineCount, toBox } from "./geometry";
+import { type Box, intersect, lineCount, toBox, unitOf } from "./geometry";
 
 export const SHARED_ATTR = "data-morph";
 export const GHOST_ATTR = "data-morph-ghost";
@@ -30,11 +30,16 @@ export function visibleBoxOf(el: Element): Box | null {
     if (style.display === "contents") continue;
     if (style.overflowX !== "visible" || style.overflowY !== "visible") {
       const rect = node.getBoundingClientRect();
+      // Client sizes and borders are in layout pixels; rect and the viewport
+      // are in screen pixels. Account for scale on this node or an ancestor
+      // before clipping, otherwise a shrunk list includes cards it hides.
+      const scaleX = unitOf(rect.width, node.offsetWidth);
+      const scaleY = unitOf(rect.height, node.offsetHeight);
       visible = intersect(visible, {
-        left: rect.left + node.clientLeft,
-        top: rect.top + node.clientTop,
-        width: node.clientWidth,
-        height: node.clientHeight,
+        left: rect.left + node.clientLeft * scaleX,
+        top: rect.top + node.clientTop * scaleY,
+        width: node.clientWidth * scaleX,
+        height: node.clientHeight * scaleY,
       });
     }
     // A fixed ancestor is positioned against the viewport, so clipping by
@@ -62,15 +67,13 @@ export function hasFixedDescendant(el: Element): boolean {
 }
 
 /** The text is cut off: an ellipsis, a line clamp or hidden overflow. */
-export function isClipped(el: Element): boolean {
-  const style = getComputedStyle(el);
+export function isClipped(el: Element, style = getComputedStyle(el)): boolean {
   if (style.overflowX === "visible" && style.overflowY === "visible") return false;
   if (el.clientWidth === 0) return false;
   return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
 }
 
-export function textLines(el: Element, height: number): number {
-  const style = getComputedStyle(el);
+export function textLines(el: Element, height: number, style = getComputedStyle(el)): number {
   const fontSize = Number.parseFloat(style.fontSize) || 16;
   const inner =
     height -
@@ -81,26 +84,15 @@ export function textLines(el: Element, height: number): number {
   return lineCount(Math.max(0, inner), style.lineHeight, fontSize);
 }
 
-export function fontSizeOf(el: Element): number {
-  return Number.parseFloat(getComputedStyle(el).fontSize) || 16;
-}
-
-/** The element marked data-morph="key" inside root, ignoring ghost copies. */
-export function findShared(root: Element, key: string): HTMLElement | null {
+/** Index once per measurement; duplicate keys keep the first non-ghost element. */
+export function sharedElements(root: Element): Map<string, HTMLElement> {
+  const elements = new Map<string, HTMLElement>();
   for (const el of root.querySelectorAll<HTMLElement>(`[${SHARED_ATTR}]`)) {
-    if (el.getAttribute(SHARED_ATTR) === key && !el.closest(`[${GHOST_ATTR}]`)) return el;
-  }
-  return null;
-}
-
-export function sharedKeys(root: Element): string[] {
-  const keys: string[] = [];
-  for (const el of root.querySelectorAll(`[${SHARED_ATTR}]`)) {
     if (el.closest(`[${GHOST_ATTR}]`)) continue;
     const key = el.getAttribute(SHARED_ATTR);
-    if (key && !keys.includes(key)) keys.push(key);
+    if (key && !elements.has(key)) elements.set(key, el);
   }
-  return keys;
+  return elements;
 }
 
 export interface SheetContent {

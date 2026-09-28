@@ -5,18 +5,8 @@
  * all to the slider's time.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { choreography, defaults } from "react-morphcard";
 import { type DemoHandle, LiveDemo, Toggle } from "@/components/live-demo";
-
-/**
- * The library's default timing (src/morph.ts: defaults and choreography),
- * copied here because the docs use only the public hook. The chart's total
- * comes from the real animations, so a drift shows up as a mismatch.
- */
-const defaults = { duration: { open: 400, close: 300 }, stagger: 45, backgroundScale: 0.96 } as const;
-const choreography = {
-  open: { contentDelay: 0.325, content: 0.65, copyOut: 0.4, targetIn: 0.5, restOut: 0.35, dockDelay: 0.4, dock: 0.75 },
-  close: { copyIn: 0.37, targetOut: 0.3, restDelay: 0.5, rest: 0.5, contentOut: 0.37, dock: 0.6 },
-} as const;
 
 type Phase = "open" | "close";
 
@@ -72,6 +62,7 @@ export function Timeline() {
   const anims = useRef<Animation[]>([]);
   const armedFor = useRef<Phase | null>(null);
   const frame = useRef(0);
+  const endTime = useRef<number>(defaults.duration.open);
   const [phase, setPhase] = useState<Phase>("open");
   const [t, setT] = useState(0);
   const [total, setTotal] = useState<number>(defaults.duration.open);
@@ -124,7 +115,8 @@ export function Timeline() {
       anims.current = run;
       armedFor.current = p;
       const end = Math.max(0, ...run.map((a) => Number(a.effect?.getComputedTiming().endTime ?? 0)));
-      setTotal(end || (p === "open" ? defaults.duration.open : defaults.duration.close));
+      endTime.current = end || (p === "open" ? defaults.duration.open : defaults.duration.close);
+      setTotal(endTime.current);
       const sheet = wrap.current?.querySelector(".mc-sheet");
       if (sheet) setBlocks(sheet.querySelectorAll("[data-morph-stagger]").length || 1);
       return true;
@@ -163,15 +155,18 @@ export function Timeline() {
       start = 0;
     }
     setPlaying(true);
+    // arm() measured this run; React's total state still belongs to the
+    // previous render during the first Play click.
+    const until = endTime.current;
     const speed = slow ? 0.25 : 1;
     let last = performance.now();
     let now = start;
     const tick = (time: number) => {
-      now = Math.min(total, now + (time - last) * speed);
+      now = Math.min(until, now + (time - last) * speed);
       last = time;
       for (const a of anims.current) a.currentTime = now;
       setT(now);
-      if (now >= total) {
+      if (now >= until) {
         setPlaying(false);
         release();
         return;
@@ -199,13 +194,13 @@ export function Timeline() {
   return (
     <div className="not-prose mct" ref={wrap}>
       <div className="mct-grid">
-      <LiveDemo
+      <div className="mct-preview"><LiveDemo
         controls={false}
         options={{ timeScale: 1, reducedMotion: allowMotion ? false : "system" }}
         onReady={(d) => {
           demo.current = d;
         }}
-      />
+      /></div>
       <div className="mct-panel">
         <div className="mct-top">
           <div className="mcp-seg" role="group" aria-label="Phase">

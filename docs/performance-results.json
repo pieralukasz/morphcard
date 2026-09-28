@@ -1,0 +1,422 @@
+{
+  "date": "2026-09-28",
+  "baselineSha256": "23afbb203c6090bd693a252e6d42722c54031dc31d719533d12ce2c8927e1a0f",
+  "runs": [
+    {
+      "name": "demo",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 11.8,
+        "p95Ms": 19.3
+      },
+      "close": {
+        "medianMs": 8.3,
+        "p95Ms": 13.4
+      },
+      "callsPerCycle": {
+        "style": 488,
+        "rect": 34,
+        "queryAll": 25
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 23,
+        "LayoutDuration": 3.386,
+        "RecalcStyleDuration": 15.776
+      },
+      "variant": "before",
+      "order": "before-after"
+    },
+    {
+      "name": "small",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 10.7,
+        "p95Ms": 14.9
+      },
+      "close": {
+        "medianMs": 8.1,
+        "p95Ms": 13.1
+      },
+      "callsPerCycle": {
+        "style": 325,
+        "rect": 36,
+        "queryAll": 25
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 21,
+        "LayoutDuration": 2.328,
+        "RecalcStyleDuration": 16.041
+      },
+      "variant": "before",
+      "order": "before-after"
+    },
+    {
+      "name": "large-list",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 16.2,
+        "p95Ms": 22.8
+      },
+      "close": {
+        "medianMs": 14,
+        "p95Ms": 20.3
+      },
+      "callsPerCycle": {
+        "style": 1877,
+        "rect": 36,
+        "queryAll": 25
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 21,
+        "LayoutDuration": 4.576,
+        "RecalcStyleDuration": 25.297
+      },
+      "variant": "before",
+      "order": "before-after"
+    },
+    {
+      "name": "rich-sheet",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 168.2,
+        "p95Ms": 373.6
+      },
+      "close": {
+        "medianMs": 158.8,
+        "p95Ms": 354.3
+      },
+      "callsPerCycle": {
+        "style": 2837,
+        "rect": 156,
+        "queryAll": 105
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 77,
+        "LayoutDuration": 8.819,
+        "RecalcStyleDuration": 324.748
+      },
+      "variant": "before",
+      "order": "before-after"
+    },
+    {
+      "name": "demo",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 8.7,
+        "p95Ms": 10.2
+      },
+      "close": {
+        "medianMs": 5.2,
+        "p95Ms": 7.2
+      },
+      "callsPerCycle": {
+        "style": 464,
+        "rect": 34,
+        "queryAll": 11
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 13,
+        "LayoutDuration": 3.204,
+        "RecalcStyleDuration": 11.143
+      },
+      "variant": "after",
+      "order": "before-after"
+    },
+    {
+      "name": "small",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 6.1,
+        "p95Ms": 7
+      },
+      "close": {
+        "medianMs": 3.9,
+        "p95Ms": 5.1
+      },
+      "callsPerCycle": {
+        "style": 301,
+        "rect": 36,
+        "queryAll": 11
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 13,
+        "LayoutDuration": 2.384,
+        "RecalcStyleDuration": 8.389
+      },
+      "variant": "after",
+      "order": "before-after"
+    },
+    {
+      "name": "large-list",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 13.7,
+        "p95Ms": 16.6
+      },
+      "close": {
+        "medianMs": 10.6,
+        "p95Ms": 12.3
+      },
+      "callsPerCycle": {
+        "style": 1853,
+        "rect": 36,
+        "queryAll": 11
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 13,
+        "LayoutDuration": 6.046,
+        "RecalcStyleDuration": 19.934
+      },
+      "variant": "after",
+      "order": "before-after"
+    },
+    {
+      "name": "rich-sheet",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 27.4,
+        "p95Ms": 31.4
+      },
+      "close": {
+        "medianMs": 16.1,
+        "p95Ms": 25.4
+      },
+      "callsPerCycle": {
+        "style": 2693,
+        "rect": 156,
+        "queryAll": 11
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 13,
+        "LayoutDuration": 9.716,
+        "RecalcStyleDuration": 47.805
+      },
+      "variant": "after",
+      "order": "before-after"
+    },
+    {
+      "name": "demo",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 10,
+        "p95Ms": 11.1
+      },
+      "close": {
+        "medianMs": 6.1,
+        "p95Ms": 6.9
+      },
+      "callsPerCycle": {
+        "style": 464,
+        "rect": 34,
+        "queryAll": 11
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 13,
+        "LayoutDuration": 3.755,
+        "RecalcStyleDuration": 13.115
+      },
+      "variant": "after",
+      "order": "after-before"
+    },
+    {
+      "name": "small",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 5,
+        "p95Ms": 9.2
+      },
+      "close": {
+        "medianMs": 3.5,
+        "p95Ms": 5.7
+      },
+      "callsPerCycle": {
+        "style": 301,
+        "rect": 36,
+        "queryAll": 11
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 13,
+        "LayoutDuration": 2.112,
+        "RecalcStyleDuration": 8.423
+      },
+      "variant": "after",
+      "order": "after-before"
+    },
+    {
+      "name": "large-list",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 13.5,
+        "p95Ms": 15.7
+      },
+      "close": {
+        "medianMs": 10.9,
+        "p95Ms": 11.7
+      },
+      "callsPerCycle": {
+        "style": 1853,
+        "rect": 36,
+        "queryAll": 11
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 13,
+        "LayoutDuration": 5.76,
+        "RecalcStyleDuration": 19.265
+      },
+      "variant": "after",
+      "order": "after-before"
+    },
+    {
+      "name": "rich-sheet",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 25,
+        "p95Ms": 30.8
+      },
+      "close": {
+        "medianMs": 14.5,
+        "p95Ms": 19.2
+      },
+      "callsPerCycle": {
+        "style": 2693,
+        "rect": 156,
+        "queryAll": 11
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 13,
+        "LayoutDuration": 8.795,
+        "RecalcStyleDuration": 41.323
+      },
+      "variant": "after",
+      "order": "after-before"
+    },
+    {
+      "name": "demo",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 10.2,
+        "p95Ms": 15.3
+      },
+      "close": {
+        "medianMs": 6.8,
+        "p95Ms": 12.3
+      },
+      "callsPerCycle": {
+        "style": 488,
+        "rect": 34,
+        "queryAll": 25
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 23,
+        "LayoutDuration": 2.649,
+        "RecalcStyleDuration": 14.291
+      },
+      "variant": "before",
+      "order": "after-before"
+    },
+    {
+      "name": "small",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 10.1,
+        "p95Ms": 16.3
+      },
+      "close": {
+        "medianMs": 8.6,
+        "p95Ms": 13.5
+      },
+      "callsPerCycle": {
+        "style": 325,
+        "rect": 36,
+        "queryAll": 25
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 21,
+        "LayoutDuration": 2.099,
+        "RecalcStyleDuration": 15.231
+      },
+      "variant": "before",
+      "order": "after-before"
+    },
+    {
+      "name": "large-list",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 16,
+        "p95Ms": 21.8
+      },
+      "close": {
+        "medianMs": 12.9,
+        "p95Ms": 18.5
+      },
+      "callsPerCycle": {
+        "style": 1877,
+        "rect": 36,
+        "queryAll": 25
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 21,
+        "LayoutDuration": 4.58,
+        "RecalcStyleDuration": 24.458
+      },
+      "variant": "before",
+      "order": "after-before"
+    },
+    {
+      "name": "rich-sheet",
+      "cpu": 4,
+      "samples": 30,
+      "open": {
+        "medianMs": 158.1,
+        "p95Ms": 364.5
+      },
+      "close": {
+        "medianMs": 137.7,
+        "p95Ms": 358
+      },
+      "callsPerCycle": {
+        "style": 2837,
+        "rect": 156,
+        "queryAll": 105
+      },
+      "browserPerCycle": {
+        "LayoutCount": 7,
+        "RecalcStyleCount": 77,
+        "LayoutDuration": 8.66,
+        "RecalcStyleDuration": 324.466
+      },
+      "variant": "before",
+      "order": "after-before"
+    }
+  ]
+}

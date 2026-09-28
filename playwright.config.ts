@@ -1,7 +1,14 @@
 import { defineConfig } from "@playwright/test";
 
+type BrowserName = "chromium" | "firefox" | "webkit";
+
 // Port of the static server for the examples. Pick a free one if 3311 is taken.
 const port = Number(process.env.MORPHCARD_PORT ?? 3311);
+// Opt into the full engine matrix: MORPHCARD_BROWSERS=chromium,firefox,webkit.
+const browsers = (process.env.MORPHCARD_BROWSERS ?? "chromium").split(",") as BrowserName[];
+for (const browser of browsers) {
+  if (!["chromium", "firefox", "webkit"].includes(browser)) throw new Error(`Unknown browser: ${browser}`);
+}
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -18,21 +25,22 @@ export default defineConfig({
     navigationTimeout: 30_000,
     trace: "retain-on-failure",
   },
-  projects: [
+  projects: browsers.flatMap((browserName) => [
     {
-      name: "desktop",
-      use: { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 },
+      name: browserName === "chromium" ? "desktop" : `${browserName}-desktop`,
+      use: { browserName, viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 },
     },
     {
-      name: "phone",
+      name: browserName === "chromium" ? "phone" : `${browserName}-phone`,
       use: {
+        browserName,
         viewport: { width: 390, height: 844 },
         deviceScaleFactor: 2,
-        isMobile: true,
+        ...(browserName === "firefox" ? {} : { isMobile: true }),
         hasTouch: true,
       },
     },
-  ],
+  ]),
   webServer: {
     command: `node scripts/serve.mjs`,
     env: { PORT: String(port) },

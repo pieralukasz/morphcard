@@ -12,7 +12,9 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { type Morph, type MorphOptions, type MorphState, createMorph, defaults, resolveTiming } from "./morph";
+import { createMorph } from "./morph";
+import { defaults, resolveTiming } from "./timing";
+import type { Morph, MorphOptions, MorphState } from "./types";
 
 export type UseMorphOptions = Omit<MorphOptions, "sheet" | "background" | "scrim" | "prepare" | "resolveCard">;
 
@@ -69,6 +71,12 @@ interface Pending {
   apply: () => void;
 }
 
+interface QueuedOpen {
+  run: () => Promise<boolean>;
+  resolve: (reached: boolean) => void;
+  reject: (error: unknown) => void;
+}
+
 const isKey = (value: unknown): value is MorphKey => typeof value === "string" || typeof value === "number";
 const isElement = (value: unknown): value is HTMLElement =>
   typeof value === "object" && value !== null && "nodeType" in value;
@@ -81,6 +89,9 @@ export function useMorph<T = unknown>(options: UseMorphOptions = {}): UseMorph<T
   const [scrim, setScrim] = useState<HTMLElement | null>(null);
   const instance = useRef<Morph | null>(null);
   const pending = useRef<Pending | null>(null);
+  const queued = useRef<QueuedOpen | null>(null);
+  const mounted = useRef(false);
+  const initialized = useRef(false);
   const latest = useRef(options);
   latest.current = options;
   // Cards registered with cardRef, one callback per key, and the key the sheet opened from.
@@ -92,6 +103,20 @@ export function useMorph<T = unknown>(options: UseMorphOptions = {}): UseMorph<T
   const cardFor = useCallback((key: MorphKey): HTMLElement | null => {
     const el = cards.current.get(key);
     return el?.isConnected ? el : null;
+  }, []);
+
+  // A mount effect may request a deep link before callback refs have caused
+  // the engine's first render. Keep that request until the engine is ready.
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      queueMicrotask(() => {
+        if (mounted.current) return; // StrictMode immediately mounted again.
+        queued.current?.resolve(false);
+        queued.current = null;
+      });
+    };
   }, []);
 
   useEffect(() => {
@@ -120,6 +145,20 @@ export function useMorph<T = unknown>(options: UseMorphOptions = {}): UseMorph<T
       },
     });
     instance.current = morph;
+    initialized.current = true;
+    queueMicrotask(() => {
+      if (!mounted.current || instance.current !== morph) return;
+      const job = queued.current;
+      queued.current = null;
+      // flushSync must run outside React's effect/commit phase.
+      if (job) {
+        try {
+          job.run().then(job.resolve, job.reject);
+        } catch (error) {
+          job.reject(error);
+        }
+      }
+    });
     return () => {
       morph.destroy();
       if (instance.current === morph) instance.current = null;
@@ -163,7 +202,7 @@ export function useMorph<T = unknown>(options: UseMorphOptions = {}): UseMorph<T
     return ref;
   }, []);
 
-  const open = useCallback((target: HTMLElement | MorphKey | MorphTarget<T> | null, update?: () => void) => {
+  const open = useCallback((target: HTMLElement | MorphKey | MorphTarget<T> | null, update?: () => void): Promise<boolean> => {
     let card: HTMLElement | null = null;
     let key: MorphKey | null = null;
     let hasItem = false;
@@ -180,23 +219,33 @@ export function useMorph<T = unknown>(options: UseMorphOptions = {}): UseMorph<T
     }
     if (!card && key !== null) card = cardFor(key);
     const apply = () => {
-      if (hasItem) setItem(nextItem);
+      if (hasItem) setItem(() => nextItem);
       update?.();
     };
     const morph = instance.current;
     if (!morph) {
+      if (!initialized.current && mounted.current) {
+        queued.current?.resolve(false);
+        return new Promise<boolean>((resolve, reject) => {
+          queued.current = { run: () => open(target, update), resolve, reject };
+        });
+      }
       apply();
       return Promise.resolve(false);
     }
     applyOptions();
     pending.current = { key, apply };
-    const result = morph.open(card);
-    // prepare runs synchronously inside open(); drop the update if it did not start.
-    pending.current = null;
-    return result;
+    try {
+      return morph.open(card);
+    } finally {
+      // prepare runs synchronously; do not retain updates from refused/failed opens.
+      pending.current = null;
+    }
   }, [cardFor, applyOptions]);
 
   const close = useCallback((opts?: UseMorphCloseOptions) => {
+    queued.current?.resolve(false);
+    queued.current = null;
     const morph = instance.current;
     if (!morph) return Promise.resolve(true);
     applyOptions();

@@ -96,21 +96,19 @@ const trips: Trip[] = [
 ];
 
 function Cover({ trip, large }: { trip: Trip; large?: boolean }) {
-  // The square cover turns into a wide banner. Both copies fill the same
-  // rectangle while they crossfade, but a centred icon would be two sizes in
-  // it, so the banner has none: the card's icon fades out as it grows.
+  // The background changes aspect ratio; the glyph keeps its own proportions.
+  // Shared elements are siblings so the glyph never inherits the cover's scale.
   return (
     <div
       className={`mch-cover${large ? " is-large" : ""}`}
-      data-morph="cover"
-      data-morph-mode="box"
       style={{ ["--h" as string]: trip.hue }}
     >
-      {large ? null : (
+      <div className="mch-cover-fill" data-morph="cover" data-morph-mode="box" />
+      <div className="mch-glyph" data-morph="glyph" data-morph-mode="box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d={trip.glyph} />
         </svg>
-      )}
+      </div>
     </div>
   );
 }
@@ -188,7 +186,7 @@ function TripSheet({ trip }: { trip: Trip }) {
         ))}
       </ol>
       <aside className="mcs-note" data-morph-stagger>
-        <b>What you just saw.</b> The cover, the city, the dates and the tag carry the same <code>data-morph</code> key
+        <b>What you just saw.</b> The cover, the icon, the city, the dates and the tag carry the same <code>data-morph</code> key
         on the card and here, so they flew. “{trip.saved}” is only on the card, so it faded. The panel itself started as
         the card's rectangle and its clip opened. Press Esc, click outside, or use Back: it plays in reverse and lands on
         the card.

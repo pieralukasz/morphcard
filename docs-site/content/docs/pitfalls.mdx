@@ -41,7 +41,7 @@ A sheet smaller than the screen, such as a centred panel, may not cover the card
 
 **What happened.** A container with a `position: fixed` bottom bar was scaled during the transition. A transformed element becomes the containing block for its fixed descendants, so the bar left the bottom of the screen and moved with the container.
 
-**Rule.** The sheet moves by `clip-path`, never by transform. The background is only scaled when it has no fixed descendant. Staggered blocks and the dock fall back to opacity if they contain one.
+**Rule.** The sheet grows by `clip-path`. A centred sheet may also translate to reach the card, but only when it has no fixed descendants. The background is only scaled when it has no fixed descendant. Staggered blocks and the dock fall back to opacity if they contain one.
 
 ## 7. Motion for people who asked for none
 
@@ -53,5 +53,5 @@ A sheet smaller than the screen, such as a centred panel, may not cover the card
 
 - **`[hidden]` must hide.** A CSS rule like `.sheet { display: flex }` beats the `hidden` attribute. Add `[hidden] { display: none !important }`.
 - **Keep the sheet full size.** morphcard reads the sheet's rectangle as the end of the flight. A sheet that is still sliding in from CSS gives the wrong target.
-- **Fill the sheet in `prepare`.** Anything written after `open()` is not measured.
+- **Fill the sheet before measurement.** Use `open({ key, item })` and render from `morph.item`, or pass a synchronous update callback to `open(card, update)`. Content added later is not included in the measured flight.
 - **One element per key on each side.** If the sheet has two `data-morph="title"` elements, the first one wins.

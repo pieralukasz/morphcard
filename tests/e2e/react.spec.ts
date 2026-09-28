@@ -91,6 +91,25 @@ function expectNear(actual: Rect, expected: Rect, label: string) {
 }
 
 test.describe("useMorph", () => {
+  test("a deep link requested in a mount effect opens after the refs are ready", async ({ page, errors }) => {
+    await page.goto("/tests/fixtures/react/index.html?mode=keyed&deep=2042");
+    await settled(page, "open");
+    expect(await page.evaluate(() => Reflect.get(window, "autoOpenResult"))).toBe(true);
+    expect(await page.evaluate(() => window.reactMorph.item?.id)).toBe("2042");
+    await expect(page.locator(".mc-sheet .cargo")).toHaveText("Chilled dairy, 22 pallets");
+    await page.keyboard.press("Escape");
+    await settled(page, "closed");
+    void errors;
+  });
+
+  test("close cancels a deep link queued before initialization", async ({ page, errors }) => {
+    await page.goto("/tests/fixtures/react/index.html?mode=keyed&deep=cancel");
+    await page.waitForFunction(() => Reflect.get(window, "autoOpenResult") === false);
+    await settled(page, "closed");
+    expect(await page.evaluate(() => window.reactMorph.item)).toBeNull();
+    void errors;
+  });
+
   test("open then Back lands the card on its exact rect", async ({ page, errors }) => {
     await gotoReact(page);
     await openCard(page, "2042");

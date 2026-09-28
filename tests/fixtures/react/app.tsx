@@ -4,7 +4,7 @@
 //
 //   ?mode=keyed   cards open with open({ key, item }) and the sheet shows morph.item
 //   (default)     cards open with open(element, update), as in earlier versions
-import { StrictMode, useState } from "react";
+import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { type UseMorphOptions, useMorph } from "../../../src/index";
 import { deliveries } from "../../../examples/shared/data.js";
@@ -39,6 +39,13 @@ function App() {
   const [generation, setGeneration] = useState(0);
   const [sheetShown, setSheetShown] = useState(true);
   const item = keyed ? morph.item : legacy;
+  useEffect(() => {
+    const deep = new URLSearchParams(location.search).get("deep");
+    if (!deep) return;
+    const item = deliveries.find((d) => d.id === deep) ?? deliveries[0]!;
+    void morph.open({ key: item.id, item }).then((result) => Object.assign(window, { autoOpenResult: result }));
+    if (deep === "cancel") void morph.close();
+  }, [morph.open, morph.close]);
   Object.assign(window, {
     reactMorph: morph,
     bump: () => setRenders((n) => n + 1),

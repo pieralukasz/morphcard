@@ -600,25 +600,45 @@
   overflow: hidden;
 }
 
+/* The sheet clips the flight; the card copy must let its shared parts leave. */
+.mch-card[data-morph-ghost] {
+  overflow: visible;
+}
+
 /*
  * Square on the card, a 3:1 banner in the sheet. The two shapes differ, so
  * the library flies the cover as one frame that changes shape.
  */
 .mch-cover {
+  position: relative;
   display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: center;
   aspect-ratio: 1 / 1;
-  background: linear-gradient(135deg, hsl(var(--h) 72% 64%), hsl(calc(var(--h) + 28) 68% 46%));
   color: rgb(255 255 255 / 0.92);
 }
 
-.dark .mch-cover {
+.mch-cover-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, hsl(var(--h) 72% 64%), hsl(calc(var(--h) + 28) 68% 46%));
+}
+
+.dark .mch-cover-fill {
   background: linear-gradient(135deg, hsl(var(--h) 52% 42%), hsl(calc(var(--h) + 28) 55% 28%));
 }
 
-.mch-cover svg {
-  width: auto;
+.mch-glyph {
+  position: relative;
+  aspect-ratio: 1 / 1;
   height: 52%;
+}
+
+.mch-glyph svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .mch-cover.is-large {
@@ -948,6 +968,26 @@
   display: grid;
   gap: 24px;
   align-items: start;
+}
+
+@container (max-width: 779px) {
+  .mct-preview {
+    position: sticky;
+    top: 96px;
+    z-index: 2;
+    min-width: 0;
+    height: 252px;
+    display: flex;
+    justify-content: center;
+    background: var(--color-fd-background);
+  }
+
+  .mct-preview .mc-live {
+    width: 390px;
+    flex: none;
+    transform: scale(0.35);
+    transform-origin: top center;
+  }
 }
 
 .mct-panel {

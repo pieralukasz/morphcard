@@ -1,37 +1,47 @@
 ---
 title: Compared with View Transitions
-description: When to use the browser's View Transitions API and when morphcard fits better.
+description: Choosing between native transitions, React ViewTransition, Motion and react-morphcard.
 ---
 
-Same-document view transitions (`document.startViewTransition()` with `view-transition-name`) can animate a card into a detail screen too. They are supported in Chrome and Edge 111+, Safari 18+ and Firefox 144+ ([web.dev](https://web.dev/blog/same-document-view-transitions-are-now-baseline-newly-available), [MDN: Firefox 144](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/144)).
+View Transitions can implement a card-to-detail transition. Choose react-morphcard for its specific interaction contract: a mounted detail sheet, shared elements, Back that reverses the current flight, scroll restoration and visibility fallbacks. It is not a general replacement for the browser API or an animation framework.
 
-## How they differ
+## Choose for the interaction
 
-| | View Transitions | morphcard |
-| --- | --- | --- |
-| What animates | Screenshots of the old and new state, as pseudo-elements above the page | The live elements: the sheet, the card copy, the shared elements |
-| Changing the DOM | Any change inside the callback, including a route change | The sheet must already be in the page; you fill it in `prepare` |
-| Interrupting | Starting a new transition skips the running one, so the page jumps to the latest state | The running animations reverse from where they are |
-| Text of different sizes | Old and new snapshots are images that scale with their group and crossfade | The live element scales when both versions wrap the same way; otherwise both fly and crossfade |
-| Off-screen or missing ends | An element named only on the old side fades out on top of the new state unless you remove its name first | Checked for every pair; falls back to a fade |
-| Clicks during the transition | The `::view-transition` overlay takes them unless you set `pointer-events: none` on it, and elements in the transition never receive them ([spec](https://drafts.csswg.org/css-view-transitions/)) | The list stays clickable while the sheet closes |
-| Reduced motion | Up to you, in CSS | Built in, opacity only |
-| Code size | None, it is the browser | About 11 kB gzipped |
+| Requirement | Starting point |
+| --- | --- |
+| Navigation between pages or replacement of an entire view | Native View Transitions, or your router's integration |
+| React updates coordinated with Suspense and transitions | React `<ViewTransition>` |
+| Reordering layouts, gestures, springs and many kinds of shared elements | Motion `layout` / `layoutId` |
+| A card opening a mounted sheet, with immediate reversal on Back | react-morphcard |
 
-## Use View Transitions when
+These are recommendations, not performance rankings. Profile the actual page on target devices before claiming one approach is faster.
 
-- The transition is part of a route change and you do not want a sheet mounted next to the list.
-- Many elements change at once and you want the browser to capture them all.
-- You also want cross-document transitions between real page loads.
-- You can live with a transition that finishes before the next one starts.
+## What the browser and React already provide
 
-## Use morphcard when
+Native View Transitions capture the old and new views and animate their pseudo-elements. Starting another document transition skips the active one; it does not automatically reverse its progress. Custom scheduling and animation control can change that behaviour. See the [View Transitions specification](https://www.w3.org/TR/css-view-transitions-1/).
 
-- The detail is a sheet above the list, like a bottom sheet or a modal detail on mobile.
-- People go back and forth quickly and you want Back to reverse an open that is still running.
-- The card title and the header differ in size and line count and should not stretch.
-- You need the fallbacks from [Pitfalls](/docs/pitfalls) without writing them.
+React's `<ViewTransition>` coordinates capture with React commits. Its documented scheduling finishes the current React transition and batches queued updates into the next one. It also handles shared boundaries outside the viewport by using enter/exit behaviour. You still configure reduced motion. See the [React reference](https://react.dev/reference/react/ViewTransition).
 
-## Both at once
+Do not assume View Transitions always block the whole page or allow only one independent animation. Chrome 147 added element-scoped transitions, including concurrent and nested transitions; the rest of the page can stay interactive. Check support separately from document-level transitions. See [Chrome's element-scoped API](https://developer.chrome.com/blog/element-scoped-view-transitions).
 
-They do not conflict. You can use View Transitions for page-level navigation and morphcard for the list-to-detail sheet inside a page. Do not give an element a `view-transition-name` and a `data-morph` key used in the same interaction: both will try to animate it.
+## What react-morphcard adds
+
+The hook animates the actual sheet and shared elements through WAAPI, plus a temporary copy of the card. It owns a narrow choreography:
+
+- Back reverses the same run at its current position, including before opening has finished.
+- Partially visible cards grow from their visible portion; entirely hidden or missing cards use an opacity fallback.
+- Text that wraps differently uses two moving copies and a crossfade.
+- Reduced motion, scroll restoration, return focus, and cleanup are included.
+- `open({ key, item })` updates the mounted detail before geometry is measured.
+
+That behaviour comes with maintenance cost: DOM measurement, clipping, copies, focus and browser-specific animation details. Native capture avoids maintaining some of that machinery. The published, unminified ESM build measured about 15.4 kB gzipped during the September 2026 review, excluding React; consumer minification and tree shaking change the result.
+
+## When Motion is the better fit
+
+Motion's `layout` and `layoutId` support layout and shared-element animation, with `AnimatePresence` for exits and options for scroll/fixed layouts. If the app already uses Motion for gestures and springs, build the sheet there before adding another animation dependency. See [Motion layout animations](https://motion.dev/docs/react-layout-animations).
+
+## Combining approaches
+
+Use separate ownership boundaries: for example, route navigation through React ViewTransition and card details through react-morphcard. Avoid scheduling both on the same subtree at the same time. In particular, this hook uses `flushSync` before measurement, which can cause React to skip a pending ViewTransition. Let one interaction finish or skip before starting the other.
+
+The hook is an animation primitive, not a complete modal system. See [Accessibility](/docs/accessibility) for the surrounding dialog's responsibilities.

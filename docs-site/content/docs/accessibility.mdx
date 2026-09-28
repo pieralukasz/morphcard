@@ -28,13 +28,13 @@ On close, focus returns to what opened the sheet: the focused element inside the
 
 ## Keyboard
 
-Escape closes the sheet (set `closeOnEscape: false` to handle it yourself; the event is left alone if something else called `preventDefault()`). Enter or Space on a card's button opens it, since opening is up to your click handler.
+Escape closes the most recently opened sheet. Repeated Escape during its close does not dismiss a sheet underneath. Set `closeOnEscape: false` to handle it yourself; the event is left alone if something else called `preventDefault()`. Enter or Space on a card's button opens it, since opening is up to your click handler.
 
-While the sheet is open the background has `inert`, so Tab stays inside the sheet and screen readers do not read the list.
+While the sheet is open the supplied background has `inert`, so its content cannot receive focus and screen readers do not read it. This is not a general focus trap: other page regions outside that background remain reachable. For a modal, your dialog layer must contain keyboard focus and make all underlying page regions inert.
 
 ## Screen readers
 
-Give the sheet `role="dialog"`, `aria-modal="true"` and a label. The temporary copy of the card inside the sheet has `aria-hidden="true"` and `inert`, and exists only while the surface moves.
+Give a dialog sheet `role="dialog"` and a label. Add `aria-modal="true"` only when the surrounding dialog layer enforces modal focus and interaction. The temporary copy of the card inside the sheet has `aria-hidden="true"` and `inert`, and exists only while the surface moves.
 
 ## Checklist
 

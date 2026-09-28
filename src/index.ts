@@ -16,6 +16,5 @@ export {
   type MorphTiming,
   type PairReport,
   type SkipReason,
-  choreography,
-  defaults,
-} from "./morph";
+} from "./types";
+export { choreography, defaults } from "./timing";
