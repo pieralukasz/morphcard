@@ -26,10 +26,13 @@ export function LiveDemo({ controls = true }: { controls?: boolean }) {
     let alive = true;
     let mounted: Demo | null = null;
     // Loaded on the client only: it touches the DOM as soon as it runs.
-    import("../../../examples/shared/demo.js").then(({ mountDemo }) => {
+    Promise.all([
+      import("../../../src/index"),
+      import("../../../examples/shared/demo-app.js"),
+    ]).then(([{ createMorph }, { mountDemo }]) => {
       const el = host.current;
       if (!alive || !el) return;
-      mounted = mountDemo(el, {
+      mounted = mountDemo(createMorph, el, {
         layout: "frame",
         wide: false,
         onStateChange: (next: string) => setState(next),
