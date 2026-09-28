@@ -1,27 +1,26 @@
 ---
 title: API reference
-description: createMorph, its options and the instance it returns, the useMorph hook, and the data attributes.
+description: The useMorph hook, its options, what it returns, the exported constants and the data attributes.
 ---
 
-## createMorph(options)
+## useMorph(options)
 
 ```ts
-import { createMorph } from "morphcard";
+import { useMorph } from "react-morphcard";
 
-const morph: Morph = createMorph(options: MorphOptions);
+const morph = useMorph<Item>(options?: UseMorphOptions);
 ```
 
-Creates a controller for one sheet. It sets `hidden` on the sheet and scrim straight away and listens for Escape and clicks on `[data-morph-close]`. Throws a `TypeError` when `sheet` is missing or when `background` or `scrim` contains the sheet.
+One hook per sheet. `Item` is the type of `morph.item` and defaults to `unknown`. The hook works in any modern browser, in installed PWAs and in WebViews. It does not work in React Native.
+
+The hook creates its animation engine once the sheet element is mounted and destroys it on unmount. It is safe to call during server rendering: it touches `window` and `document` only in effects and event handlers. The package's built file starts with `"use client"`, so a Next.js App Router page can import it directly.
 
 ### Options
 
+All options are optional. They are applied after every render and again at the start of each `open` and `close`, so a change takes effect on the next transition. An option you remove goes back to its default.
+
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `sheet` | `HTMLElement` | required | The detail surface. `position: fixed` or `absolute`, full size. |
-| `background` | `HTMLElement \| null` | `null` | What recedes behind the sheet. Scaled and made `inert` while open. |
-| `scrim` | `HTMLElement \| null` | `null` | Dims the background. Its opacity animates 0 to 1. |
-| `prepare` | `(card) => void \| Promise<void>` | | Fill the sheet for this card. Runs before measuring. `card` is `null` for a deep link. |
-| `onStateChange` | `(state, card) => void` | | Called on every state change. |
 | `duration` | `{ open?: number; close?: number }` | `{ open: 400, close: 300 }` | Milliseconds. |
 | `easing` | `{ surface?: string; content?: string }` | see below | CSS easing strings. |
 | `stagger` | `number` | `45` | Delay between `data-morph-stagger` blocks, in ms. |
@@ -33,6 +32,7 @@ Creates a controller for one sheet. It sets `hidden` on the sheet and scrim stra
 | `shared` | `string[]` | all keys | Keys allowed to fly. Other marked elements fade in place. |
 | `radius` | `number` | computed | Corner radius of the card in px. Read from the card's `border-radius` when omitted. |
 | `scroller` | `HTMLElement \| Window` | nearest scrolling ancestor | The list's scroll container, for `restoreScroll`. |
+| `onStateChange` | `(state, card) => void` | | Called on every state change. The latest function is always used. |
 
 Default easings:
 
@@ -43,27 +43,42 @@ easing: {
 }
 ```
 
-### The Morph instance
+### What it returns
 
 ```ts
-interface Morph {
-  open(card?: HTMLElement | null): Promise<boolean>;
-  close(options?: { to?: HTMLElement | null }): Promise<boolean>;
-  readonly state: "closed" | "opening" | "open" | "closing";
-  readonly card: HTMLElement | null;
-  readonly plan: MorphPlan | null;
-  setOptions(options: Partial<MorphOptions>): void;
-  destroy(): void;
+interface UseMorph<Item> {
+  sheetRef: (el: HTMLElement | null) => void;
+  backgroundRef: (el: HTMLElement | null) => void;
+  scrimRef: (el: HTMLElement | null) => void;
+  cardRef: (key: string | number) => (el: HTMLElement | null) => void;
+  state: "closed" | "opening" | "open" | "closing";
+  item: Item | null;
+  open(target: HTMLElement | string | number | { key?; card?; item? } | null, update?: () => void): Promise<boolean>;
+  close(options?: { to?: HTMLElement | string | number | null }): Promise<boolean>;
+  readonly instance: { state; card; plan } | null;
 }
 ```
 
-**`open(card)`** opens the sheet from `card`. Pass `null` to open without a flight, as for a deep link: the sheet fades in. The promise resolves `true` when the sheet is open and `false` when another call took over first. Calling it while the same card is closing turns the close around.
+**`sheetRef`, `backgroundRef`, `scrimRef`** are callback refs for the three elements. The sheet is required. The background and scrim are optional. None of them may contain another. Keep the sheet mounted: the hook shows and hides it with the `hidden` attribute.
 
-**`close(options)`** closes back to the card it opened from. Pass `{ to: element }` when the list re-rendered and the card is a new element, or `{ to: null }` when there is nothing to return to (the sheet fades out). Resolves `true` once closed.
+**`cardRef(key)`** returns a callback ref for the card with this key. It returns the same function for the same key on every render. Register cards this way when you want to open or close by key instead of passing elements.
 
-**`state`** is also written to the sheet as `data-morph-state="opening" | "open" | "closing"`, and removed when closed, so CSS can react to it.
+**`state`** is React state, so the component re-renders when it changes. It is also written to the sheet as `data-morph-state="opening" | "open" | "closing"`, and removed when closed, so CSS can react to it.
 
-**`plan`** describes the latest transition:
+**`item`** is the item passed to the latest `open`. It is set inside `flushSync` before anything is measured, so the sheet already shows it when the flight is planned. It goes back to `null` only after the close has finished, so the sheet keeps its content during the whole flight back.
+
+**`open(target, update?)`** opens the sheet. `target` can be:
+
+- a card element, as in `morph.open(event.currentTarget)`;
+- a key registered with `cardRef`, as in `morph.open(item.id)`;
+- an object `{ key, card, item }`. `card` wins over `key` when both are given. `item` becomes `morph.item`;
+- `null`, to open without a flight, as for a deep link. The sheet fades in.
+
+`update` runs inside `flushSync` before measuring. Put a state update that fills the sheet there if you keep the selected item in your own state. The promise resolves `true` when the sheet is open and `false` when another call took over first. Opening the card that is closing turns the close around. Opening another card while one closes finishes that close at once.
+
+**`close(options?)`** closes back to the card it opened from. When that card was opened by key and the list has rendered a new element for the key since, the flight goes to the new element. Pass `{ to }` to choose another card: an element, a registered key, or `null` when there is nothing to return to (the sheet then fades out). Resolves `true` once closed. Escape, `[data-morph-close]` elements and a click on the scrim call it for you.
+
+**`instance`** is a read-only view of the engine once the sheet is mounted, and `null` before. Its `plan` describes the latest transition and is useful when a flight did not happen:
 
 ```ts
 interface MorphPlan {
@@ -86,33 +101,19 @@ type SkipReason =
   | "sheet-element-offscreen";
 ```
 
-**`setOptions(options)`** changes timing and callbacks for the next transition. The three elements cannot change; create a new instance for that.
+`instance.card` is the card element the sheet belongs to, or `null`.
 
-**`destroy()`** stops any transition, removes every attribute and style the library set, hides the sheet and removes the listeners.
+### Stable functions
 
-### Exported constants
+`open`, `close`, `cardRef` and the three element refs keep their identity across renders. The object returned by the hook changes when `state` or `item` changes.
 
-`defaults` holds the default timing. `choreography` holds the fractions of the duration used for each part of the transition (see [Anatomy](/docs/anatomy)). Both are read-only references; pass options to change timing.
+## Exported constants
 
-## useMorph(options)
+`defaults` holds the default timing. `choreography` holds the fractions of the duration used for each part of the transition (see [Anatomy](/docs/anatomy)). Both are read-only. Pass options to change timing.
 
-```ts
-import { useMorph } from "morphcard/react";
+## Types
 
-const morph = useMorph(options?: Omit<MorphOptions, "sheet" | "background" | "scrim" | "prepare">);
-```
-
-Returns:
-
-| Field | |
-| --- | --- |
-| `sheetRef`, `backgroundRef`, `scrimRef` | Callback refs for the three elements. The instance is created once the sheet is mounted. |
-| `state` | The morph state as React state, so the component re-renders on change. |
-| `open(card, update?)` | `update` runs inside `flushSync` before measuring. Put the `setState` that fills the sheet there. |
-| `close(options?)` | Same as `Morph.close`. |
-| `instance` | The underlying `Morph`, or `null` before the sheet mounts. |
-
-Options are applied with `setOptions` after every render, so they can change freely. The instance is destroyed on unmount.
+The package exports `UseMorph`, `UseMorphOptions`, `UseMorphCloseOptions`, `MorphTarget`, `MorphKey`, `MorphInstance`, `MorphState`, `MorphPlan`, `MorphTiming`, `PairReport` and `SkipReason`.
 
 ## Data attributes
 

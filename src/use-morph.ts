@@ -107,8 +107,9 @@ export function useMorph<T = unknown>(options: UseMorphOptions = {}): UseMorph<T
         openKey.current = next?.key ?? null;
         if (next) flushSync(next.apply);
       },
-      // A close without `to` follows the card if the list re-rendered it.
-      resolveCard: (card) => (openKey.current !== null && cardFor(openKey.current)) || card,
+      // A close without `to` follows the card if the list replaced it with a
+      // new element under the same key while the sheet was open.
+      resolveCard: (card) => (card?.isConnected || openKey.current === null ? card : cardFor(openKey.current) || card),
       onStateChange: (next, card) => {
         setState(next);
         if (next === "closed") {

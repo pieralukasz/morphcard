@@ -1,52 +1,100 @@
 ---
 title: Getting started
-description: Install morphcard from GitHub and wire a list to a detail sheet, in plain JavaScript or React.
+description: Install react-morphcard from GitHub and wire a list to a detail sheet with the useMorph hook.
 ---
 
 ## Install
 
-morphcard is not published to npm yet. Install it from GitHub:
+react-morphcard is not published to npm yet. Install it from GitHub:
 
 ```bash
-pnpm add github:pieralukasz/morphcard
+pnpm add github:pieralukasz/react-morphcard
 # or
-npm install github:pieralukasz/morphcard
+npm install github:pieralukasz/react-morphcard
 ```
 
-The package ships ESM and TypeScript types from `dist/`. It has no runtime dependencies. React is an optional peer dependency, used only by `morphcard/react`.
+The package ships ESM and TypeScript types from `dist/`. It needs React 18 or 19 and `react-dom`, and has no other dependencies.
 
-## Markup
+It works in any modern browser, in installed PWAs and in WebViews. It does not work in React Native, because it animates DOM elements with the Web Animations API.
 
-You need three elements next to each other. None may contain another.
+## The component
 
-```html
-<main class="list">
-  <article class="card" data-id="2042">
-    <button class="card-hit" aria-label="Open delivery 2042"></button>
-    <h3 data-morph="title">Lyon → Milan</h3>
-    <p data-morph="company">Bellweather Foods</p>
-    <p class="meta">2 of 3 stops done</p>
-    <span class="badge" data-morph="badge">In transit</span>
-  </article>
-  <!-- more cards -->
-</main>
+You need three elements next to each other: the list, a scrim, and the detail sheet. None may contain another. The hook gives you a ref for each one, plus a ref for every card.
 
-<div class="scrim" data-morph-close></div>
+```tsx
+import { useMorph } from "react-morphcard";
 
-<section class="sheet" role="dialog" aria-modal="true" aria-label="Delivery">
-  <button data-morph-close data-morph-focus data-morph-stagger>Back</button>
-  <header>
-    <h1 data-morph="title"></h1>
-    <p data-morph="company"></p>
-    <span class="badge" data-morph="badge"></span>
-  </header>
-  <div data-morph-stagger>…stops…</div>
-  <div data-morph-stagger>…cargo…</div>
-  <footer data-morph-dock>…actions…</footer>
-</section>
+export function Deliveries({ items }: { items: Delivery[] }) {
+  const morph = useMorph<Delivery>();
+  const d = morph.item;
+
+  return (
+    <>
+      <main ref={morph.backgroundRef} className="list">
+        {items.map((item) => (
+          <article key={item.id} ref={morph.cardRef(item.id)} className="card">
+            <button
+              className="card-hit"
+              aria-label={`Open delivery ${item.id}`}
+              onClick={() => morph.open({ key: item.id, item })}
+            />
+            <h3 data-morph="title">{item.title}</h3>
+            <p data-morph="company">{item.company}</p>
+            <p className="meta">{item.meta}</p>
+            <span className="badge" data-morph="badge">{item.status}</span>
+          </article>
+        ))}
+      </main>
+
+      <div ref={morph.scrimRef} className="scrim" data-morph-close hidden />
+
+      <section
+        ref={morph.sheetRef}
+        className="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Delivery"
+        hidden
+      >
+        <button data-morph-close data-morph-focus data-morph-stagger>Back</button>
+        {d && (
+          <>
+            <header>
+              <h1 data-morph="title">{d.title}</h1>
+              <p data-morph="company">{d.company}</p>
+              <span className="badge" data-morph="badge">{d.status}</span>
+            </header>
+            <div data-morph-stagger>{d.stops}</div>
+            <div data-morph-stagger>{d.cargo}</div>
+            <footer data-morph-dock>…actions…</footer>
+          </>
+        )}
+      </section>
+    </>
+  );
+}
 ```
 
-The attributes:
+`morph.open({ key, item })` finds the card registered under `key`, sets `morph.item` to `item` inside `flushSync`, and only then measures both ends. The sheet already shows the new item when the flight is planned. `morph.item` goes back to `null` after the sheet has closed, not before, so the header does not empty while it flies back.
+
+Keep the sheet mounted. The hook hides it with the `hidden` attribute while it is closed. Escape, the Back button and the scrim close the sheet without more code.
+
+### With your own state
+
+If the selected item already lives in your state or in a router, pass the card element and an update. The hook runs the update inside `flushSync` before measuring:
+
+```tsx
+const morph = useMorph();
+const [selected, setSelected] = useState<Delivery | null>(null);
+
+<button onClick={(e) => morph.open(e.currentTarget.closest("article"), () => setSelected(item))} />
+```
+
+### Next.js
+
+The built file starts with `"use client"` and does not touch `window` or `document` when it is imported or rendered on the server. Use the hook in a client component as usual.
+
+## The attributes
 
 | Attribute | Where | Effect |
 | --- | --- | --- |
@@ -76,94 +124,22 @@ The arrows and other decorations inside a shared element move with it. Elements 
 .scrim {
   background: rgb(15 23 42 / 0.4);
 }
-/* The library hides the sheet and scrim with the hidden attribute. */
+/* The hook hides the sheet and scrim with the hidden attribute. */
 [hidden] {
   display: none !important;
 }
 ```
 
-The sheet can also be `position: absolute` inside a positioned frame, as in the demo on the home page. It must be the full-size element: morphcard animates its `clip-path` from the card's rectangle to `inset(0)`.
+The sheet can also be `position: absolute` inside a positioned frame, as in the demo on the home page. It must be the full-size element: the hook animates its `clip-path` from the card's rectangle to `inset(0)`.
 
-If a `display` rule in your CSS overrides `[hidden]`, the sheet stays visible while closed. morphcard warns about this in the console when it starts.
-
-## Vanilla JavaScript
-
-```js
-import { createMorph } from "morphcard";
-
-const list = document.querySelector(".list");
-const sheet = document.querySelector(".sheet");
-
-const morph = createMorph({
-  sheet,
-  background: list,
-  scrim: document.querySelector(".scrim"),
-  // Runs before anything is measured. Fill the sheet for this card here.
-  prepare(card) {
-    const item = items.find((d) => d.id === card?.dataset.id);
-    sheet.querySelector("h1").textContent = item.title;
-    sheet.querySelector('[data-morph="company"]').textContent = item.company;
-    // ...
-  },
-});
-
-list.addEventListener("click", (event) => {
-  const card = event.target.closest(".card");
-  if (card) morph.open(card);
-});
-```
-
-`prepare` may return a promise, for example when the detail data is fetched. The transition starts when it resolves. Escape, the Back button and the scrim close the sheet without more code.
-
-## React
-
-```tsx
-import { useState } from "react";
-import { useMorph } from "morphcard/react";
-
-export function Deliveries({ items }: { items: Delivery[] }) {
-  const morph = useMorph();
-  const [item, setItem] = useState<Delivery | null>(null);
-
-  return (
-    <>
-      <main ref={morph.backgroundRef}>
-        {items.map((d) => (
-          <article key={d.id} className="card">
-            <button
-              aria-label={`Open ${d.title}`}
-              onClick={(e) =>
-                morph.open(e.currentTarget.closest("article"), () => setItem(d))
-              }
-            />
-            <h3 data-morph="title">{d.title}</h3>
-            <p data-morph="company">{d.company}</p>
-          </article>
-        ))}
-      </main>
-      <div ref={morph.scrimRef} className="scrim" data-morph-close hidden />
-      <section ref={morph.sheetRef} className="sheet" role="dialog" hidden>
-        <button data-morph-close data-morph-focus>Back</button>
-        {item && (
-          <header>
-            <h1 data-morph="title">{item.title}</h1>
-            <p data-morph="company">{item.company}</p>
-          </header>
-        )}
-      </section>
-    </>
-  );
-}
-```
-
-The second argument of `open` is a state update. The hook runs it inside `flushSync` before measuring, so the sheet already shows the new item when the flight is planned. Keep the sheet mounted; the hook shows and hides it.
+If a `display` rule in your CSS overrides `[hidden]`, the sheet stays visible while closed. The hook warns about this in the console when the sheet mounts.
 
 ## Check it works
 
-Open the page, click a card and look at `morph.plan` in the console. It tells you what the last transition decided for each shared key:
+Open the page, click a card and read `morph.instance.plan`, for example from a `console.log` in `onStateChange`. It tells you what the last transition decided for each shared key:
 
 ```js
-morph.plan;
+morph.instance.plan;
 // { direction: "open", choreography: "morph", reduced: false, backgroundScaled: true,
 //   pairs: [{ key: "title", mode: "crossfade" }, { key: "company", mode: "scale" }, ...] }
 ```
