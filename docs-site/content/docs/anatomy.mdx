@@ -3,9 +3,11 @@ title: Anatomy of the choreography
 description: What moves when, with the actual durations and easings, and why each choice was made.
 ---
 
-<Video name="open-close" caption="The demo at a quarter speed. Open, hold, back." />
+Pick open or close, then drag the slider. The phone demo is paused inside a real transition, at the moment the slider points to, and each bar shows one part of the choreography.
 
-All numbers below are for the defaults: 400 ms to open, 300 ms to close. Every part is a fraction of those durations, so changing `duration` keeps the proportions.
+<Timeline />
+
+All numbers below are for the defaults: 400 ms to open, 300 ms to close. Every part is a fraction of those durations, so changing `duration` keeps the proportions. The [playground](/docs/playground) lets you change them.
 
 ## The surface
 
@@ -21,11 +23,11 @@ A clone of the card is placed inside the sheet, exactly over the real card. It c
 
 ## Shared elements
 
-For each key marked with `data-morph` on both sides, morphcard measures the card element and the sheet element and decides how the pair travels.
+For each key marked with `data-morph` on both sides, the hook measures the card element and the sheet element and decides how the pair travels.
 
 **Scale.** If both versions have the same shape, one copy flies. The sheet element starts with `translate(...) scale(s)` that puts it over the card element (transform origin `0 0`) and animates to `none`. For text, `s` is the ratio of the font sizes. For images and other boxes, it is the ratio of the widths.
 
-**Crossfade.** A scaled copy only looks right when the text wraps the same way on both sides. morphcard crossfades when:
+**Crossfade.** A scaled copy only looks right when the text wraps the same way on both sides. The hook crossfades when:
 
 - the line count differs (a one-line route on the card, two lines in the header);
 - the card text is cut off with an ellipsis or a line clamp;

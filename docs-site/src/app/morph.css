@@ -1,0 +1,798 @@
+/*
+ * Everything on the site that grows into a sheet: the page's sheet and
+ * scrim (mcs-*), home hero cards (mch-*), the playground (mcp-*) and the
+ * anatomy timeline (mct-*).
+ *
+ * Motion rules: only transform, opacity and clip-path move. Hover changes
+ * colour instantly; press scales a tile to 0.98. The library does the rest.
+ */
+
+:root {
+  --mcs-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --mcs-radius: 16px;
+}
+
+/* The library hides the sheet and scrim with the hidden attribute. */
+.mcs-sheet[hidden],
+.mcs-scrim[hidden] {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ tiles */
+
+.mcs-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.mcs-grid.is-features {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+.mcs-grid.is-topics {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  margin: 1.5rem 0;
+}
+
+.mcs-grid.is-videos {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+  margin: 1.5rem 0;
+}
+
+.mcs-grid.is-code {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  margin: 1.5rem 0;
+}
+
+.mcs-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: var(--mcs-radius);
+  background: var(--color-fd-card);
+  color: var(--color-fd-card-foreground);
+  text-align: left;
+  transition: transform 160ms var(--mcs-ease-out);
+}
+
+.mcs-tile:active {
+  transform: scale(0.98);
+}
+
+.mcs-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.mcs-hit:focus-visible {
+  outline: 2px solid var(--color-fd-ring);
+  outline-offset: 2px;
+}
+
+.mcs-more svg,
+.mch-saved svg {
+  transition: transform 160ms var(--mcs-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mcs-tile:hover {
+    border-color: color-mix(in oklab, var(--color-fd-primary) 50%, var(--color-fd-border));
+  }
+
+  .mcs-tile:hover .mcs-more svg,
+  .mcs-tile:hover .mch-saved svg {
+    transform: translateX(3px);
+  }
+}
+
+.mcs-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mcs-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--color-fd-primary) 12%, transparent);
+  color: var(--color-fd-primary);
+}
+
+.mcs-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 48 / 36 of the tile icon, glyph included, so the pair scales as one box. */
+.mcs-icon.is-large {
+  width: 48px;
+  height: 48px;
+  border-radius: 13.33px;
+}
+
+.mcs-icon.is-large svg {
+  width: 26.67px;
+  height: 26.67px;
+}
+
+.mcs-kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--color-fd-primary);
+}
+
+.mcs-kicker.is-large {
+  font-size: 13px;
+}
+
+.mcs-tile-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.mcs-tile-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mcs-tile-text p {
+  margin: 0;
+}
+
+.mcs-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-fd-primary);
+}
+
+.mcs-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  flex: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  background: color-mix(in oklab, var(--color-fd-primary) 12%, transparent);
+  color: var(--color-fd-primary);
+}
+
+/* ------------------------------------------------------------ the sheet */
+
+.mcs-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(15 18 30 / 0.45);
+}
+
+.dark .mcs-scrim {
+  background: rgb(0 0 0 / 0.6);
+}
+
+/*
+ * A centred panel on wide screens, the whole screen on phones. Its size does
+ * not depend on its content: the library measures it before it is shown.
+ */
+.mcs-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  margin: auto;
+  width: min(880px, calc(100vw - 48px));
+  height: min(85vh, 900px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 20px;
+  background: var(--color-fd-card);
+  color: var(--color-fd-card-foreground);
+  font-size: 16px;
+  line-height: 1.6;
+  text-align: left;
+  outline: none;
+}
+
+@media (max-width: 640px) {
+  .mcs-sheet {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+.mcs-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px 8px 16px;
+  background: var(--color-fd-card);
+}
+
+.mcs-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-fd-muted-foreground);
+  transition: transform 160ms var(--mcs-ease-out);
+}
+
+.mcs-back:active {
+  transform: scale(0.97);
+}
+
+.mcs-back:focus-visible {
+  outline: 2px solid var(--color-fd-ring);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mcs-back:hover {
+    background: var(--color-fd-accent);
+    color: var(--color-fd-accent-foreground);
+  }
+}
+
+.mcs-esc {
+  padding: 2px 7px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 6px;
+  font-family: var(--default-mono-font-family, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--color-fd-muted-foreground);
+}
+
+@media (hover: none) {
+  .mcs-esc {
+    display: none;
+  }
+}
+
+.mcs-body {
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 640px) {
+  .mcs-body {
+    padding: 4px 20px 32px;
+  }
+}
+
+.mcs-head {
+  margin-bottom: 18px;
+}
+
+.mcs-title {
+  margin: 12px 0 0;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.mcs-title.is-small {
+  margin: 0;
+  font-size: 22px;
+}
+
+.mcs-lead {
+  margin: 0 0 16px;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.mcs-prose {
+  max-width: 68ch;
+  color: color-mix(in oklab, var(--color-fd-foreground) 88%, transparent);
+}
+
+.mcs-prose p {
+  margin: 0 0 12px;
+}
+
+.mcs-prose ul {
+  margin: 0;
+  padding-left: 1.2em;
+  list-style: disc;
+}
+
+.mcs-prose li {
+  margin: 6px 0;
+}
+
+.mcs-prose a {
+  color: var(--color-fd-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mcs-sheet code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--color-fd-muted);
+  font-size: 0.88em;
+}
+
+.mcs-foot {
+  margin-top: 24px;
+}
+
+.mcs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--color-fd-primary);
+  color: var(--color-fd-primary-foreground);
+  font-weight: 500;
+  transition: transform 160ms var(--mcs-ease-out);
+}
+
+.mcs-link:active {
+  transform: scale(0.97);
+}
+
+.mcs-note {
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--color-fd-muted);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mcs-note b {
+  color: var(--color-fd-foreground);
+}
+
+/* ---------------------------------------------------------------- video */
+
+.mcs-video-tile {
+  padding: 10px 10px 12px;
+  gap: 10px;
+}
+
+.mcs-media {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-fd-muted);
+}
+
+.mcs-media.is-thumb {
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+}
+
+.mcs-media img,
+.mcs-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.mcs-media.is-player {
+  margin: 0 auto 16px;
+  border-radius: 14px;
+  border: 1px solid var(--color-fd-border);
+}
+
+.mcs-media.is-player[data-orientation="tall"] {
+  height: min(62vh, 620px);
+  width: auto;
+}
+
+.mcs-media.is-player[data-orientation="wide"] {
+  width: 100%;
+}
+
+.mcs-media.is-player video {
+  object-fit: contain;
+}
+
+.mcs-media [data-theme="dark"],
+.dark .mcs-media [data-theme="light"] {
+  display: none;
+}
+
+.dark .mcs-media [data-theme="dark"] {
+  display: block;
+}
+
+.mcs-play {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgb(15 18 30 / 0.72);
+  color: white;
+}
+
+.mcs-video-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.mcs-video-meta .mcs-tile-title {
+  font-size: 14px;
+}
+
+.mcs-video-meta.is-sheet {
+  justify-content: center;
+  gap: 12px;
+}
+
+.mcs-caption {
+  margin: 10px auto 0;
+  max-width: 56ch;
+  text-align: center;
+  color: var(--color-fd-muted-foreground);
+}
+
+/* ----------------------------------------------------------------- code */
+
+.mcs-code-card {
+  padding: 14px;
+  gap: 10px;
+}
+
+.mcs-code-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcs-code-head.is-sheet {
+  margin-bottom: 12px;
+}
+
+.mcs-file {
+  font-family: var(--default-mono-font-family, ui-monospace, monospace);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.mcs-file.is-large {
+  font-size: 15px;
+}
+
+.mcs-code-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mcs-code-note.is-sheet {
+  margin-bottom: 14px;
+  font-size: 15px;
+}
+
+.mcs-code {
+  border: 1px solid var(--color-fd-border);
+  border-radius: 10px;
+  background: var(--color-fd-secondary);
+  font-family: var(--default-mono-font-family, ui-monospace, monospace);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+.mcs-code pre {
+  margin: 0;
+  padding: 12px 0;
+  background: transparent !important;
+  white-space: pre;
+}
+
+.mcs-code .line {
+  padding: 0 16px;
+}
+
+.mcs-code.is-full {
+  overflow-x: auto;
+}
+
+.mcs-copy {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: transform 160ms var(--mcs-ease-out);
+}
+
+.mcs-copy:active {
+  transform: scale(0.97);
+}
+
+.mcs-copy .is-done,
+.mcs-copy[data-copied] .is-idle {
+  display: none;
+}
+
+.mcs-copy[data-copied] .is-done {
+  display: inline;
+}
+
+/* ------------------------------------------------------ home hero cards */
+
+.mch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 900px) {
+  .mch-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .mch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mch-grid > li:nth-child(n + 5) {
+    display: none;
+  }
+}
+
+.mch-card {
+  height: 100%;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* Same 3:1 shape on the card and in the sheet, so the cover scales as one box. */
+.mch-cover {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 1;
+  background: linear-gradient(135deg, hsl(var(--h) 72% 64%), hsl(calc(var(--h) + 28) 68% 46%));
+  color: rgb(255 255 255 / 0.92);
+}
+
+.dark .mch-cover {
+  background: linear-gradient(135deg, hsl(var(--h) 52% 42%), hsl(calc(var(--h) + 28) 55% 28%));
+}
+
+.mch-cover svg {
+  width: auto;
+  height: 52%;
+}
+
+.mch-cover.is-large {
+  margin-bottom: 20px;
+  border-radius: 14px;
+}
+
+.mch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px 14px;
+}
+
+.mch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mch-city {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.mch-city.is-large {
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.mch-when {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mch-when.is-large {
+  margin-top: 4px;
+  font-size: 16px;
+}
+
+.mch-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-fd-primary);
+}
+
+.mch-head {
+  margin-bottom: 16px;
+}
+
+.mch-days {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mch-days li {
+  display: flex;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 10px;
+}
+
+.mch-days span {
+  min-width: 48px;
+  font-weight: 600;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mch-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mch-hint kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------ phone demo */
+
+.mc-live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/*
+ * The frame's container must have a definite width (the home section gives
+ * it a fixed 390px column). In an auto-sized column 100% followed the
+ * controls row, so the frame changed size with the state label and Back
+ * flew to a spot the card was not at.
+ */
+.mc-device {
+  width: min(390px, 100%);
+  height: 720px;
+  flex: none;
+  border-radius: 28px;
+  border: 1px solid var(--color-fd-border);
+  box-shadow: 0 24px 60px -24px rgb(15 23 42 / 0.35);
+  /* The demo is its own little app: keep docs typography out of it. */
+  line-height: normal;
+  font-size: 16px;
+}
+
+.mc-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 6px;
+  font-size: 14px;
+}
+
+.mc-state {
+  display: inline-grid;
+  justify-items: start;
+  color: var(--color-fd-muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-state > * {
+  grid-area: 1 / 1;
+}
+
+.mc-state .is-sizer {
+  visibility: hidden;
+}
+
+.mc-toggle {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 999px;
+  background: var(--color-fd-card);
+  font-size: 13px;
+  font-weight: 500;
+  transition: transform 160ms var(--mcs-ease-out);
+}
+
+.mc-toggle:active {
+  transform: scale(0.97);
+}
+
+.mc-toggle[aria-pressed="true"] {
+  border-color: var(--color-fd-primary);
+  background: color-mix(in oklab, var(--color-fd-primary) 12%, var(--color-fd-card));
+  color: var(--color-fd-primary);
+}
+
+/* Press feedback for the hero buttons. */
+.mc-press {
+  transition: transform 160ms var(--mcs-ease-out);
+}
+
+.mc-press:active {
+  transform: scale(0.97);
+}

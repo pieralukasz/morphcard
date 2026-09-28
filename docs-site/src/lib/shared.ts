@@ -1,6 +1,6 @@
 import { createGetUrl } from "fumadocs-core/source";
 
-export const appName = "morphcard";
+export const appName = "react-morphcard";
 export const tagline = "A card that grows into a detail screen and shrinks back.";
 export const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -14,12 +14,15 @@ export const docsContentRoute = "/llms.mdx/docs";
 
 export const gitConfig = {
   user: "pieralukasz",
-  repo: "morphcard",
+  repo: "react-morphcard",
   branch: "main",
 };
 
 export const repoUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}`;
 export const authorUrl = "https://lucaspiera.com";
+/** The docs site keeps its address; the package and repo are react-morphcard. */
+export const siteUrl = "https://morphcard.lucaspiera.com";
+export const install = `pnpm add github:${gitConfig.user}/${gitConfig.repo}`;
 
 const getContentUrl = createGetUrl(docsContentRoute);
 

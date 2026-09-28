@@ -1,0 +1,22 @@
+---
+title: Playground
+description: Change the timing of useMorph and see it on the tiles of this page and on the phone demo.
+---
+
+The controls change the options of two `useMorph` hooks on this page: the one behind the tiles, which opens a panel over the page, and the one inside the phone demo. Change a value, then click a tile or a delivery. The code under the controls is the call that gives you the same result.
+
+<Playground />
+
+## What the options do
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `duration` | `{ open: 400, close: 300 }` | Length of each direction in ms. Every part of the transition is a fraction of it. |
+| `easing.surface` | `cubic-bezier(0.32, 0.72, 0, 1)` | The clip, the shared flights and the background. |
+| `easing.content` | `cubic-bezier(0.23, 1, 0.32, 1)` | The staggered blocks and the action bar. |
+| `stagger` | `45` | Delay between blocks marked `data-morph-stagger`, in ms. |
+| `backgroundScale` | `0.96` | How far the page behind recedes. `false` keeps it still. |
+| `reducedMotion` | `"system"` | `true` forces the opacity-only version. |
+| `timeScale` | `1` | Multiplies every duration. For reviewing motion, not for production. |
+
+Slow motion is the quickest way to judge a curve: at 4× you can see where the motion spends its time. Keep production durations short; the defaults are already on the slow side for a detail view.

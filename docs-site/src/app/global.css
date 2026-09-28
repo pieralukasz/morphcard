@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
+@import "./morph.css";
 
 /* Indigo, matched to the demo's "In transit" badge. */
 @theme {
@@ -39,29 +40,6 @@ html > body[data-scroll-locked] {
 
 .fd-step:not(:has(h2, h3, h4)):not(:last-child) {
   padding-bottom: 0.75rem;
-}
-
-/*
- * A phone-sized frame for the live demo. Its container must have a definite
- * width (the home hero gives it a fixed 390px column): in an auto-sized column
- * 100% followed the controls row, so the frame changed size with the state
- * label and the card that Back flew to was not where the card ended up.
- */
-.mc-device {
-  width: min(390px, 100%);
-  height: 720px;
-  border-radius: 28px;
-  overflow: hidden;
-  border: 1px solid var(--color-fd-border);
-  box-shadow: 0 24px 60px -24px rgb(15 23 42 / 0.35);
-  /* The demo is its own little app: keep docs typography out of it. */
-  line-height: normal;
-  font-size: 16px;
-}
-
-.mc-device > .mc-demo {
-  width: 100%;
-  height: 100%;
 }
 
 /* Videos recorded from the demo, one per theme. */

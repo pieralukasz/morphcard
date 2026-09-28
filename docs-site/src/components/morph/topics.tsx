@@ -25,9 +25,22 @@ export const topics: Topic[] = [
     summary: "Install from GitHub, add three elements, call useMorph.",
     lead: "A list, a sheet and an optional scrim. Mark what should fly with data-morph and open the sheet from a card.",
     points: [
-      "React: useMorph from morphcard/react gives you three refs and open(card, update).",
-      "Any other stack: createMorph from morphcard, with a prepare callback that fills the sheet.",
+      "useMorph() gives you three refs, the state, and open(card, update).",
+      "update runs before anything is measured, so set the selected item there.",
       "Keep the sheet mounted and add [hidden] { display: none !important } to your CSS.",
+    ],
+  },
+  {
+    slug: "playground",
+    kicker: "Try it",
+    title: "Playground",
+    icon: icon("M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"),
+    summary: "Change duration, easing, stagger and speed, then click the tiles.",
+    lead: "The controls change the options of the hooks on that page, so the tiles and the phone demo show exactly what those options do.",
+    points: [
+      "Open and close durations, surface and content easing, stagger.",
+      "Background scale on or off, 4x slow motion, reduced motion.",
+      "Copy the useMorph call for your own code.",
     ],
   },
   {
@@ -35,12 +48,12 @@ export const topics: Topic[] = [
     kicker: "Reference",
     title: "API reference",
     icon: icon("M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"),
-    summary: "Every option, the instance, the hook and the data attributes.",
-    lead: "One function, one hook, six data attributes. Options can change between transitions with setOptions.",
+    summary: "Every option of useMorph, what it returns, and the data attributes.",
+    lead: "One hook and six data attributes. Options passed to useMorph apply from the next transition.",
     points: [
       "duration { open: 400, close: 300 }, stagger 45, backgroundScale 0.96, timeScale 1.",
-      "open(card) and close() return promises that resolve once the state is reached.",
-      "morph.plan tells you what the last transition decided for every shared key.",
+      "open(card, update) and close() return promises that resolve once the state is reached.",
+      "state is one of closed, opening, open and closing, and re-renders your component.",
     ],
   },
   {
@@ -96,19 +109,6 @@ export const topics: Topic[] = [
     ],
   },
   {
-    slug: "playground",
-    kicker: "Try it",
-    title: "Playground",
-    icon: icon("M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"),
-    summary: "Change duration, easing, stagger and speed on the live demo.",
-    lead: "The controls call setOptions on the running demo, so what you see is exactly what those options do.",
-    points: [
-      "Open and close durations, surface and content easing, stagger.",
-      "4x slow motion, light and dark, reduced motion.",
-      "Copy the options object for your own code.",
-    ],
-  },
-  {
     slug: "recipes",
     kicker: "Guides",
     title: "Recipes",
@@ -116,7 +116,7 @@ export const topics: Topic[] = [
     summary: "List to detail with a URL, a photo gallery, a wallet card.",
     lead: "Three setups that differ from the basic list: routing, images that scale by width, and a same-colour card.",
     points: [
-      "Deep links open without a flight; popstate closes.",
+      "Deep links open without a flight, and the browser's Back button closes.",
       "Images fly by width and crossfade when the aspect ratio changes.",
       "A card and sheet of the same colour only change shape.",
     ],
@@ -127,10 +127,10 @@ export const topics: Topic[] = [
     title: "vs View Transitions",
     icon: icon("M7 7h10v10H7zM3 3h4M3 3v4M21 21h-4M21 21v-4"),
     summary: "When the browser API is enough and when it is not.",
-    lead: "View Transitions snapshot the page and cross-fade images. morphcard animates the live DOM, so it can be interrupted.",
+    lead: "View Transitions snapshot the page and cross-fade images. react-morphcard animates the live DOM, so it can be interrupted.",
     points: [
       "Same-document view transitions: Chrome and Edge 111, Safari 18, Firefox 144.",
-      "morphcard keeps the page interactive and reverses mid-flight.",
+      "react-morphcard keeps the page interactive and reverses mid-flight.",
       "Use View Transitions for page-level swaps between routes.",
     ],
   },

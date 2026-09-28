@@ -1,41 +1,44 @@
 "use client";
 /**
- * One morphcard instance per page, shared by every tile that grows into a
- * sheet (feature tiles, video tiles, code cards, topic cards).
+ * One useMorph instance per page, shared by every tile that grows into a
+ * sheet (hero cards, feature tiles, video tiles, code cards, topic cards).
  *
- * It uses the library's own React binding, useMorph from morphcard/react,
- * imported from the source in this repository. The sheet and scrim are
- * portaled to <body>: the background (the page content) must not contain
- * the sheet, and the sheet must cover the navigation bar too.
+ * The sheet and scrim are portaled to <body>: the background (the page
+ * content) must not contain the sheet, and the sheet covers the navigation.
  *
- *   <MorphStage>…page…</MorphStage>
+ *   <MorphStage>…page…</MorphStage>              wraps the page in a background
+ *   <MorphStage background="#nd-page">…</MorphStage>   uses an existing element
  *   const stage = useStage();
  *   stage.open(tileElement, { label: "Title", render: () => <Sheet… /> });
+ *
+ * On a wide screen the sheet is a centred panel; on a phone it fills the
+ * screen. The panel is tall and fixed in size on purpose: the library only
+ * flies from a card that lies inside the sheet's box, so the panel has to
+ * cover the page column where the tiles are.
  */
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { usePathname } from "next/navigation";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { type MorphState, type UseMorphOptions, useMorph } from "../../../../src/react";
+import { type UseMorph, useMorph } from "react-morphcard";
+import { MORPH_DEFAULTS, type MorphTuning } from "./defaults";
+
+export type StageState = UseMorph["state"];
+
 
 export interface StageEntry {
   /** Accessible name of the sheet. */
   label: string;
   render: () => ReactNode;
-  /** Wider column for media and code. */
-  wide?: boolean;
+  /** Styling hook for the sheet: "tile", "video", "code", "example". */
+  kind?: string;
 }
 
 interface Stage {
   open(card: HTMLElement | null, entry: StageEntry): Promise<boolean>;
-  close(): Promise<boolean>;
-  state: MorphState;
+  close(options?: { to?: HTMLElement | null }): Promise<boolean>;
+  state: StageState;
+  /** Overrides the timing for this page (the playground). null restores the defaults. */
+  configure(options: MorphTuning | null): void;
 }
 
 const StageContext = createContext<Stage | null>(null);
@@ -48,25 +51,44 @@ export function useStage(): Stage {
 
 export function MorphStage({
   children,
+  background,
   className,
-  options,
 }: {
   children: ReactNode;
+  /** Selector of an existing element to use as the background. Default: a wrapper div. */
+  background?: string;
   className?: string;
-  options?: UseMorphOptions;
 }) {
-  const morph = useMorph(options);
+  const [tuned, setTuned] = useState<MorphTuning | null>(null);
+  const morph = useMorph({ ...MORPH_DEFAULTS, ...tuned, closeOnEscape: true, restoreScroll: true });
   const [entry, setEntry] = useState<StageEntry | null>(null);
   const [host, setHost] = useState<HTMLElement | null>(null);
+  const pathname = usePathname();
   useEffect(() => setHost(document.body), []);
 
-  const { open: morphOpen, close: morphClose } = morph;
+  const { open: morphOpen, close: morphClose, backgroundRef } = morph;
+
+  // The docs layout owns its grid, so the article column is found by id and
+  // looked up again after every navigation.
+  useEffect(() => {
+    if (background) backgroundRef(document.querySelector<HTMLElement>(background));
+  }, [background, backgroundRef, pathname]);
+
+  // A link inside the sheet navigated: fade the sheet out over the new page.
+  const lastPath = useRef(pathname);
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    void morphClose({ to: null });
+  }, [pathname, morphClose]);
+
   const open = useCallback(
     (card: HTMLElement | null, next: StageEntry) => morphOpen(card, () => setEntry(next)),
     [morphOpen],
   );
-  const close = useCallback(() => morphClose(), [morphClose]);
-  const stage = useMemo(() => ({ open, close, state: morph.state }), [open, close, morph.state]);
+  const close = useCallback((options?: { to?: HTMLElement | null }) => morphClose(options), [morphClose]);
+  const configure = useCallback((options: MorphTuning | null) => setTuned(options), []);
+  const stage = useMemo(() => ({ open, close, configure, state: morph.state }), [open, close, configure, morph.state]);
 
   // The page behind must not scroll while the sheet covers it. The root has
   // scrollbar-gutter: stable, so hiding overflow does not shift the layout.
@@ -83,9 +105,13 @@ export function MorphStage({
 
   return (
     <StageContext.Provider value={stage}>
-      <div ref={morph.backgroundRef} className={className}>
-        {children}
-      </div>
+      {background ? (
+        children
+      ) : (
+        <div ref={backgroundRef} className={className}>
+          {children}
+        </div>
+      )}
       {host
         ? createPortal(
             <>
@@ -96,7 +122,7 @@ export function MorphStage({
                 role="dialog"
                 aria-modal="true"
                 aria-label={entry?.label}
-                data-wide={entry?.wide ? "" : undefined}
+                data-kind={entry?.kind}
                 hidden
               >
                 <div className="mcs-bar" data-morph-stagger>
@@ -106,6 +132,9 @@ export function MorphStage({
                     </svg>
                     Back
                   </button>
+                  <kbd className="mcs-esc" aria-hidden="true">
+                    Esc
+                  </kbd>
                 </div>
                 <div className="mcs-body">{entry?.render()}</div>
               </section>

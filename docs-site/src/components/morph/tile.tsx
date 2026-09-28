@@ -1,20 +1,21 @@
 "use client";
 /**
- * A tile that grows into a sheet through the page's MorphStage. The tile's
- * kicker, icon and title fly into the sheet header; the rest of the tile
- * fades and the sheet's own content staggers in.
+ * A tile that grows into a sheet through the page's MorphStage. The icon,
+ * kicker and title fly into the sheet header; the summary and the "Open"
+ * line fade with the card, and the sheet's own blocks come in staggered.
  */
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useStage } from "./stage";
+import { useLeave } from "./use-leave";
 
 export interface TileProps {
   kicker: string;
   title: string;
   summary: ReactNode;
   icon?: ReactNode;
-  /** Sheet content under the header. Blocks are staggered. */
-  detail: ReactNode;
+  /** Sheet content under the header. An array staggers block by block. */
+  detail: ReactNode | ReactNode[];
   href?: string;
   hrefLabel?: string;
   /** Text on the tile's call to action. */
@@ -33,13 +34,14 @@ export function MorphTile({ kicker, title, summary, icon, detail, href, hrefLabe
         onClick={(e) =>
           stage.open(e.currentTarget.parentElement, {
             label: title,
+            kind: "tile",
             render: () => <TileSheet {...{ kicker, title, icon, detail, href, hrefLabel }} />,
           })
         }
       />
       <div className="mcs-tile-head">
         {icon ? (
-          <span className="mcs-icon" data-morph="icon">
+          <span className="mcs-icon" data-morph="icon" data-morph-mode="box">
             {icon}
           </span>
         ) : null}
@@ -53,11 +55,28 @@ export function MorphTile({ kicker, title, summary, icon, detail, href, hrefLabe
       <div className="mcs-tile-text">{summary}</div>
       <span className="mcs-more" aria-hidden="true">
         {more}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+        <Arrow />
       </span>
     </article>
+  );
+}
+
+export function Arrow({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+/** A link inside a sheet: fades the sheet out while the next page loads. */
+export function SheetLink({ href, children }: { href: string; children: ReactNode }) {
+  const leave = useLeave();
+  return (
+    <Link className="mcs-link" href={href} onClick={(e) => leave(e, href)}>
+      {children}
+      <Arrow size={16} />
+    </Link>
   );
 }
 
@@ -74,11 +93,11 @@ function TileSheet({
       <header className="mcs-head">
         <div className="mcs-tile-head">
           {icon ? (
-            <span className="mcs-icon is-large" data-morph="icon">
+            <span className="mcs-icon is-large" data-morph="icon" data-morph-mode="box">
               {icon}
             </span>
           ) : null}
-          <span className="mcs-kicker" data-morph="kicker">
+          <span className="mcs-kicker is-large" data-morph="kicker">
             {kicker}
           </span>
         </div>
@@ -86,17 +105,23 @@ function TileSheet({
           {title}
         </h2>
       </header>
-      <div className="mcs-prose" data-morph-stagger>
-        {detail}
-      </div>
+      {Array.isArray(detail) ? (
+        <div className="mcs-prose">
+          {detail.map((block, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static blocks, never reordered
+            <div key={i} data-morph-stagger>
+              {block}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mcs-prose" data-morph-stagger>
+          {detail}
+        </div>
+      )}
       {href ? (
-        <div data-morph-stagger>
-          <Link className="mcs-link" href={href}>
-            {hrefLabel ?? "Read the full page"}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
-          </Link>
+        <div className="mcs-foot" data-morph-stagger>
+          <SheetLink href={href}>{hrefLabel ?? "Read the full page"}</SheetLink>
         </div>
       ) : null}
     </>

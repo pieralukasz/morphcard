@@ -20,16 +20,16 @@ export function TopicGrid({ only }: { only?: string[] }) {
           more="Preview"
           href={`/docs/${t.slug}`}
           hrefLabel={`Read ${t.title}`}
-          detail={
-            <>
-              <p className="mcs-lead">{t.lead}</p>
-              <ul>
-                {t.points.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
-            </>
-          }
+          detail={[
+            <p key="lead" className="mcs-lead">
+              {t.lead}
+            </p>,
+            <ul key="points">
+              {t.points.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>,
+          ]}
         />
       ))}
     </div>

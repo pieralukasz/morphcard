@@ -1,36 +1,43 @@
 ---
 title: Introduction
-description: morphcard animates a card into a full detail screen and back, with the card's title, name and badge flying into the header.
+description: react-morphcard is a React hook that grows a card into a detail view and shrinks it back, with the card's title, name and badge flying into the header.
 ---
 
-Tap a delivery below. The card grows into the detail screen, the route and company fly into the header, and the rest of the page settles in. Back plays a shorter version that ends on the card.
+Every card below opens with the library. Click one: it grows into a preview of that page, its icon and title fly into the header, and Back, Esc or a click outside shrinks it back onto the card.
 
-<LiveDemo />
+<TopicGrid />
 
-morphcard is a small TypeScript library for this one transition. You give it three elements (the detail sheet, the list behind it, an optional scrim) and mark the parts that should travel with `data-morph`. It measures both ends when a transition starts and plays it with the Web Animations API.
+react-morphcard does one transition. You give `useMorph` three elements (the detail sheet, the content behind it and an optional scrim) and mark the parts that should travel with `data-morph`. When a card is clicked, it measures both ends and plays the transition with the Web Animations API.
+
+```tsx
+import { useMorph } from "react-morphcard";
+```
 
 ## What you get
 
-- **A single surface.** The sheet is clipped to the card's rectangle and the clip opens to full screen. Text inside is never scaled as a bitmap, so it stays sharp.
-- **Shared elements.** Anything marked `data-morph="key"` on the card and on the sheet flies between the two. Text that wraps differently on each side crossfades while it flies.
+- **A single surface.** The sheet is clipped to the card's rectangle and the clip opens to its full size. Text inside is never scaled as a bitmap, so it stays sharp.
+- **Shared elements.** Anything marked `data-morph="key"` on the card and in the sheet flies between the two. Text that wraps differently on each side crossfades while it flies.
 - **A separate close.** Closing takes 300 ms against 400 ms for opening. The big heading hands over to the card's own text in the first 90 ms.
 - **Interruptions.** Close during an open and the running animations turn around from where they are.
 - **Safe fallbacks.** No card on screen, no destination, or reduced motion: it fades instead of flying.
-- **No dependencies.** 36 kB of unminified ESM, about 11 kB gzipped, plus an optional React hook in `morphcard/react`.
+- **No other dependencies.** React 18 or 19 and nothing else.
+
+## Where it runs
+
+Desktop and mobile browsers, installed PWAs and WebViews: anywhere React DOM runs. The sheet can be a centred panel, as on this site, or cover the whole screen, as in a phone app. It does not support React Native.
 
 ## Watch it slowed down
 
-<Video name="open-close" caption="Open and back at a quarter speed, phone size." />
+<VideoGrid>
+  <VideoTile name="open-close" title="Open and back" badge="4× slower" caption="Open and back at a quarter speed, phone size." />
+  <VideoTile name="desktop" slow={false} width={1280} height={800} title="On a desktop" badge="1×" caption="A 1280 × 800 layout at normal speed." />
+</VideoGrid>
 
-The same at normal speed on a desktop layout:
-
-<Video name="desktop" slow={false} width={1280} height={800} caption="1280 × 800, normal speed." />
-
-The [anatomy page](/docs/anatomy) breaks this recording down step by step, with every duration and easing.
+The [anatomy page](/docs/anatomy) takes this transition apart on a timeline you can scrub, with every duration and easing.
 
 ## Browser support
 
-morphcard uses `Element.animate`, animates `clip-path: inset()` and sets the `inert` attribute. `inert` is the newest of these: Chrome and Edge 102, Firefox 112, Safari 15.5 ([caniuse](https://caniuse.com/wf-inert)). The automated tests run in Chromium only so far.
+The hook uses `Element.animate`, animates `clip-path: inset()` and sets the `inert` attribute. `inert` is the newest of these: Chrome and Edge 102, Firefox 112, Safari 15.5 ([caniuse](https://caniuse.com/wf-inert)). The automated tests run in Chromium only so far.
 
 ## Status
 

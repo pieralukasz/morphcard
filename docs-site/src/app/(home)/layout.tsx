@@ -1,6 +1,11 @@
 import { HomeLayout } from "fumadocs-ui/layouts/home";
+import { MorphStage } from "@/components/morph/stage";
 import { baseOptions } from "@/lib/layout.shared";
 
 export default function Layout({ children }: LayoutProps<"/">) {
-  return <HomeLayout {...baseOptions()}>{children}</HomeLayout>;
+  return (
+    <MorphStage className="mcs-page">
+      <HomeLayout {...baseOptions()}>{children}</HomeLayout>
+    </MorphStage>
+  );
 }

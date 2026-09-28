@@ -1,10 +1,10 @@
 "use client";
 /**
- * A recording as a tile. Tapping it grows the poster into a large player
- * (the poster and the player are one shared element, so the picture itself
+ * A recording as a tile. Clicking it grows the poster into a large player
+ * (the poster and the player share data-morph="media", so the picture
  * flies); Back shrinks the player into the tile.
  *
- * The player shows the poster while it flies and starts playing once open.
+ * The player shows its poster while it flies and starts playing once open.
  * On close it is reset with load(), which puts the poster back, so the
  * picture that lands on the tile is the tile's own picture.
  */
@@ -30,11 +30,13 @@ function files(name: string, themed: boolean) {
   return themed ? [`${name}-light`, `${name}-dark`] : [name];
 }
 
+const themeOf = (file: string, themed: boolean) => (themed ? (file.endsWith("-dark") ? "dark" : "light") : undefined);
+
 export function VideoTile({ name, title, caption, slow = true, themed = true, width = 390, height = 800, badge }: VideoTileProps) {
   const stage = useStage();
   const variants = files(name, themed);
   return (
-    <article className="mcs-tile mcs-video-tile" data-orientation={width > height ? "wide" : "tall"}>
+    <article className="mcs-tile mcs-video-tile">
       <button
         type="button"
         className="mcs-hit"
@@ -42,26 +44,18 @@ export function VideoTile({ name, title, caption, slow = true, themed = true, wi
         onClick={(e) =>
           stage.open(e.currentTarget.parentElement, {
             label: title,
-            wide: width > height,
+            kind: "video",
             render: () => <Player {...{ name, title, caption, slow, themed, width, height, badge }} />,
           })
         }
       />
-      <div className="mcs-media" data-morph="media" data-morph-mode="box" style={{ aspectRatio: `${width} / ${height}` }}>
+      <div className="mcs-media is-thumb" data-morph="media" data-morph-mode="box">
         {variants.map((file) => (
           // biome-ignore lint/performance/noImgElement: static export, plain posters
-          <img
-            key={file}
-            src={asset(`/videos/${file}.png`)}
-            alt=""
-            width={width}
-            height={height}
-            data-theme={themed ? (file.endsWith("-dark") ? "dark" : "light") : undefined}
-            loading="lazy"
-          />
+          <img key={file} src={asset(`/videos/${file}.png`)} alt="" width={width} height={height} data-theme={themeOf(file, themed)} loading="lazy" />
         ))}
         <span className="mcs-play" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5.5v13l11-6.5z" />
           </svg>
         </span>
@@ -87,8 +81,8 @@ function Player({ name, title, caption, slow, themed, width, height, badge }: Re
 
   useEffect(() => {
     const videos = Array.from(box.current?.querySelectorAll("video") ?? []);
-    const visible = videos.find((v) => v.checkVisibility?.() ?? v.offsetParent !== null);
     if (stage.state === "open") {
+      const visible = videos.find((v) => v.offsetParent !== null);
       const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (visible && !still) void visible.play().catch(() => {});
     } else if (stage.state === "closing") {
@@ -103,6 +97,7 @@ function Player({ name, title, caption, slow, themed, width, height, badge }: Re
     <>
       <div
         className="mcs-media is-player"
+        data-orientation={width > height ? "wide" : "tall"}
         data-morph="media"
         data-morph-mode="box"
         ref={box}
@@ -115,12 +110,12 @@ function Player({ name, title, caption, slow, themed, width, height, badge }: Re
             poster={asset(`/videos/${file}.png`)}
             width={width}
             height={height}
-            data-theme={themed ? (file.endsWith("-dark") ? "dark" : "light") : undefined}
+            data-theme={themeOf(file, themed)}
             muted
             loop
             playsInline
             controls
-            preload="metadata"
+            preload="none"
             aria-label={caption}
           />
         ))}
@@ -140,4 +135,8 @@ function Player({ name, title, caption, slow, themed, width, height, badge }: Re
       </p>
     </>
   );
+}
+
+export function VideoGrid({ children }: { children: React.ReactNode }) {
+  return <div className="not-prose mcs-grid is-videos">{children}</div>;
 }

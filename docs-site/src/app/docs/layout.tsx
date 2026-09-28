@@ -1,10 +1,12 @@
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { MorphStage } from "@/components/morph/stage";
 import { baseOptions } from "@/lib/layout.shared";
 import { authorUrl } from "@/lib/shared";
 import { source } from "@/lib/source";
 
 export default function Layout({ children }: LayoutProps<"/docs">) {
   return (
+    <MorphStage className="mcs-page">
     <DocsLayout
       tree={source.getPageTree()}
       {...baseOptions()}
@@ -24,5 +26,6 @@ export default function Layout({ children }: LayoutProps<"/docs">) {
     >
       {children}
     </DocsLayout>
+    </MorphStage>
   );
 }
