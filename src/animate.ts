@@ -78,7 +78,7 @@ export function buildAnimations(r: Run, g: Geometry, context: AnimationContext):
       opacity: "1",
       visibility: "visible",
       pointerEvents: "none",
-      zIndex: "2147483000",
+      zIndex: "0",
     });
     ghost.style.borderColor = g.border ?? "transparent";
 
@@ -93,7 +93,10 @@ export function buildAnimations(r: Run, g: Geometry, context: AnimationContext):
       // Not flying (skipped or not in `shared`): it fades in place like the rest of the card.
       else rest.push(node);
     }
-    sheet.appendChild(ghost);
+    // Paint the old card below the live shared elements. A topmost ghost
+    // lets its opaque cover hide a live icon/photo whose ghost is hidden
+    // (scale mode), making that element vanish until the cover fades out.
+    sheet.prepend(ghost);
     r.ghosts.push(ghost);
     // Correct for borders, scroll offsets or an unexpected containing block.
     const placed = toLocal(screenRectOf(ghost), g.unit);

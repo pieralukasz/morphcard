@@ -52,6 +52,31 @@ try {
         }
       }, selector);
       const sample = () => page.locator(glyph).evaluate(rect);
+      // Bounding boxes and opacity can be correct while the ghost's cover
+      // paints over the glyph. Sample two white strokes in the rendered PNG.
+      const visible = async (at) => {
+        const box = await sample();
+        const png = (await page.screenshot()).toString("base64");
+        const colors = await page.evaluate(async ({ png, box }) => {
+          const img = new Image();
+          img.src = `data:image/png;base64,${png}`;
+          await img.decode();
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          const scale = img.width / innerWidth;
+          return [8, 13].flatMap((y) => {
+            const x = box.x + box.width / 2;
+            const top = box.y + box.height * y / 24;
+            if (top < 0 || top >= innerHeight) return [];
+            return [[...ctx.getImageData(Math.floor(x * scale), Math.floor(top * scale), 1, 1).data].slice(0, 3)];
+          });
+        }, { png, box });
+        assert.ok(colors.length > 0 && colors.every((rgb) => rgb.every((c) => c > 215)),
+          `${at}: glyph is obscured, stroke pixels ${JSON.stringify(colors)}`);
+      };
       const closed = () => page.waitForFunction((selector) => document.querySelector(selector).hidden, sheet);
       const label = `${width}px ${position}`;
 
@@ -61,6 +86,7 @@ try {
       for (const ms of [0, 40, 80, 120, 200, 300, 400]) {
         await freeze(ms);
         frames.push(await sample());
+        await visible(`${label} open ${ms} ms`);
       }
       await resume();
       await page.waitForFunction((selector) => document.querySelector(selector).dataset.morphState === "open", sheet);
@@ -75,7 +101,10 @@ try {
 
       await start(`${sheet} .mcs-back`);
       near(await sample(), to, `${label} Back first frame`);
-      await freeze(300);
+      for (const ms of [0, 60, 120, 200, 299, 300]) {
+        await freeze(ms);
+        await visible(`${label} Back ${ms} ms`);
+      }
       near(await sample(), from, `${label} Back landing`);
       await resume();
       await closed();
