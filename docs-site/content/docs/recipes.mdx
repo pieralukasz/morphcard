@@ -1,0 +1,99 @@
+---
+title: Recipes
+description: List to detail page, a photo gallery and a wallet-style card, with the parts that differ from the basic setup.
+---
+
+## List to detail page with a URL
+
+Update the URL when the sheet opens and closes, and open without a flight when the page loads on a detail URL.
+
+```js
+const morph = createMorph({
+  sheet,
+  background: list,
+  scrim,
+  prepare(card) {
+    const id = card?.dataset.id ?? idFromUrl();
+    render(id);
+  },
+  onStateChange(state, card) {
+    if (state === "opening" && card) history.pushState({ id: card.dataset.id }, "", `/deliveries/${card.dataset.id}`);
+  },
+});
+
+// Deep link: no card, so the sheet fades in.
+if (idFromUrl()) morph.open(null);
+
+window.addEventListener("popstate", () => {
+  if (!idFromUrl()) morph.close();
+});
+// The Back button has no data-morph-close: it goes through history.
+sheet.querySelector(".back").addEventListener("click", () => history.back());
+```
+
+If the list re-renders while the sheet is open, the original card element is gone. Pass the new one when closing:
+
+```js
+morph.close({ to: list.querySelector(`[data-id="${id}"]`) });
+```
+
+If it is not in the list any more, pass `{ to: null }` and the sheet fades out.
+
+## Photo gallery
+
+Images fly by width. Mark the thumbnail and the large image with the same key:
+
+```html
+<button class="tile" data-i="3">
+  <img data-morph="photo" src="thumb-3.jpg" alt="Harbour at dawn" />
+  <span data-morph="caption">Harbour at dawn</span>
+</button>
+
+<section class="sheet" role="dialog" aria-label="Photo">
+  <img data-morph="photo" src="" alt="" />
+  <h2 data-morph="caption"></h2>
+  <p data-morph-stagger>…</p>
+  <button data-morph-close data-morph-stagger>Close</button>
+</section>
+```
+
+When the thumbnail is cropped to a different aspect ratio than the large image (4:3 against 16:9), the ratios differ by more than 0.04 and the pair crossfades while flying. Use `object-fit: cover` on both so neither copy is squashed.
+
+Set `backgroundScale: false` if the gallery is a grid of small tiles: scaling a dense grid reads as noise.
+
+## Wallet-style card
+
+A payment card that lifts into a full screen with its details. The card and the sheet share a colour, so only the shape changes.
+
+```css
+.pass {
+  background: #1e293b;
+  color: white;
+  border-radius: 20px;
+}
+.pass-sheet {
+  position: fixed;
+  inset: 0;
+  background: #1e293b;
+  color: white;
+}
+```
+
+```js
+createMorph({
+  sheet: document.querySelector(".pass-sheet"),
+  background: document.querySelector(".wallet"),
+  duration: { open: 460, close: 320 },
+  backgroundScale: 0.94,
+});
+```
+
+The clip starts with the card's 20 px corners and ends at the sheet's own radius (square here). When the card and sheet backgrounds differ, the colour animates with the clip. Mark the card number and the logo with `data-morph`; the logo is an `svg`, so it scales by width.
+
+## Slower for a demo or a review
+
+```js
+morph.setOptions({ timeScale: 4 });
+```
+
+Everything, including the stagger, plays four times slower. The recordings on this site were made with the frame-by-frame recorder in `scripts/record.mjs`, which pauses every animation and steps it 1/60 s at a time.

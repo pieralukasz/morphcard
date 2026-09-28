@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+/* Indigo, matched to the demo's "In transit" badge. */
+@theme {
+  --color-fd-primary: hsl(243, 75%, 59%);
+  --color-fd-ring: hsl(243, 75%, 59%);
+}
+
+.dark {
+  --color-fd-primary: hsl(243, 90%, 76%);
+  --color-fd-ring: hsl(243, 90%, 76%);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Keeps the page from shifting when a dialog locks scrolling; must beat the inline style. */
+html > body[data-scroll-locked] {
+  /* biome-ignore lint/complexity/noImportantStyles: overrides an inline style set by the scroll lock */
+  margin-right: 0px !important;
+  /* biome-ignore lint/complexity/noImportantStyles: same override for the CSS variable */
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+.mc-glow {
+  background:
+    radial-gradient(60% 50% at 50% 0%, hsla(243, 75%, 60%, 0.2), transparent 70%),
+    radial-gradient(40% 40% at 85% 20%, hsla(200, 80%, 50%, 0.12), transparent 70%);
+}
+
+/* One-line steps are shorter than their 2rem number badge. */
+.fd-step:not(:has(h2, h3, h4)) {
+  min-height: 2rem;
+  padding-top: 0.25rem;
+}
+
+.fd-step:not(:has(h2, h3, h4)):not(:last-child) {
+  padding-bottom: 0.75rem;
+}
+
+/* A phone-sized frame for the live demo. */
+.mc-device {
+  width: min(390px, 100%);
+  height: 720px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid var(--color-fd-border);
+  box-shadow: 0 24px 60px -24px rgb(15 23 42 / 0.35);
+  /* The demo is its own little app: keep docs typography out of it. */
+  line-height: normal;
+  font-size: 16px;
+}
+
+.mc-device > .mc-demo {
+  width: 100%;
+  height: 100%;
+}
+
+/* Videos recorded from the demo, one per theme. */
+.mc-video[data-theme="dark"] {
+  display: none;
+}
+
+.dark .mc-video[data-theme="light"] {
+  display: none;
+}
+
+.dark .mc-video[data-theme="dark"] {
+  display: block;
+}

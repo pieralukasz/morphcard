@@ -1,0 +1,44 @@
+---
+title: Accessibility
+description: Reduced motion, focus handling, keyboard support and what screen readers see.
+---
+
+## Reduced motion
+
+When `prefers-reduced-motion: reduce` matches, or `reducedMotion: true` is set, nothing moves. No transforms, no `clip-path` animation, no background scale. The transition becomes two fades:
+
+- **Open:** the empty sheet fades in over 120 ms, then its content fades in over 140 ms, starting at 100 ms.
+- **Close:** the content fades out over 100 ms, then the sheet fades out over 120 ms, starting at 100 ms.
+
+The surface fades before the content on open, and after it on close, so the text of the list and the text of the sheet never show through each other. The scrim still fades.
+
+<Video name="reduced" themed={false} caption="Reduced motion at a quarter speed: opacity only." />
+
+The browser test for this records every animation created during an open and a close and fails if any of them has a `transform` or `clip-path` keyframe.
+
+## Focus
+
+On open, focus moves into the sheet with `preventScroll: true`:
+
+1. the element with `data-morph-focus`, if there is one;
+2. otherwise the first focusable element;
+3. otherwise the sheet itself, with a temporary `tabindex="-1"`.
+
+On close, focus returns to what opened the sheet: the focused element inside the card, or the card's `data-morph-focus` element, or its first focusable element. It uses `preventScroll: true` too, so returning focus does not undo the restored scroll position. If focus has moved somewhere else outside the sheet in the meantime, it is left alone.
+
+## Keyboard
+
+Escape closes the sheet (set `closeOnEscape: false` to handle it yourself; the event is left alone if something else called `preventDefault()`). Enter or Space on a card's button opens it, since opening is up to your click handler.
+
+While the sheet is open the background has `inert`, so Tab stays inside the sheet and screen readers do not read the list.
+
+## Screen readers
+
+Give the sheet `role="dialog"`, `aria-modal="true"` and a label. The temporary copy of the card inside the sheet has `aria-hidden="true"` and `inert`, and exists only while the surface moves.
+
+## Checklist
+
+- Each card has one button or link that opens it, with an accessible name.
+- The sheet has a visible Back button with `data-morph-close`.
+- The Back button has `data-morph-focus`, or is the first focusable element.
+- `[hidden] { display: none !important }` is in your CSS, so the closed sheet is not reachable.

@@ -1,0 +1,16 @@
+{
+  "title": "morphcard",
+  "pages": [
+    "index",
+    "getting-started",
+    "api",
+    "---How it works---",
+    "anatomy",
+    "interruptions",
+    "accessibility",
+    "pitfalls",
+    "---Guides---",
+    "recipes",
+    "view-transitions"
+  ]
+}

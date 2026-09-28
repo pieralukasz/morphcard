@@ -1,0 +1,55 @@
+---
+title: Pitfalls
+description: Seven bugs found in a production app that used an earlier version of this transition, and what morphcard does about each one.
+---
+
+These came from a real app built with a View Transitions based version of the same choreography. Each one is now library behaviour, and each is covered by a browser test in `tests/e2e/morph.spec.ts`.
+
+## 1. A flight to nowhere
+
+**What happened.** From a detail screen the user went to Settings. The detail heading had a shared name, Settings had no element with that name, and a lone snapshot of the old heading floated across the Settings screen.
+
+**Rule.** Never fly when the destination is missing or not on screen. morphcard checks both ends of every pair before planning it. A missing sheet element gives `missing-sheet-element`, one scrolled out of view gives `sheet-element-offscreen`, and closing to nothing (`close({ to: null })`) fades the whole sheet out.
+
+## 2. A flight from off screen
+
+**What happened.** A detail opened from a deep link had no card on screen. On return, the list row was far below the fold. The heading flew in from, or out to, a point outside the viewport.
+
+**Rule.** A card counts as on screen when at least half its area is visible: inside the viewport, inside every ancestor that clips it, and under the sheet. Otherwise the plan is `card-offscreen` and the transition fades. `open(null)` is the deep-link case.
+
+## 3. Back that lingers
+
+**What happened.** Back used the same timing as open, and the big heading was the last thing to shrink, still moving over a list that had already settled.
+
+**Rule.** Close is 300 ms against 400 ms for open, and the background, scrim and surface end together. The sheet heading fades out in the first 90 ms and the card copy takes over, so the last thing moving is the card's own text.
+
+## 4. Scroll lost on return
+
+**What happened.** The list was scrolled when the user opened an item. On return the target rectangle was measured before the scroll position came back, so the flight aimed at the wrong place. Focusing the card then scrolled the list again.
+
+**Rule.** The list's scroll position is saved on open and put back on close before anything is measured. Focus returns with `preventScroll: true`.
+
+## 5. Stale cleanup
+
+**What happened.** A second transition started while the first was running. When the first finished, its cleanup cleared the state of the second: the ghost vanished mid-flight and the page kept a stray lock.
+
+**Rule.** Each transition has a generation number. Finish handlers compare it before doing anything. After any sequence (open, close, open during close, close during open, a double click) the tests compare every attribute on the page with the state before, and look for ghosts and inline styles.
+
+## 6. Transforms drag fixed children
+
+**What happened.** A container with a `position: fixed` bottom bar was scaled during the transition. A transformed element becomes the containing block for its fixed descendants, so the bar left the bottom of the screen and moved with the container.
+
+**Rule.** The sheet moves by `clip-path`, never by transform. The background is only scaled when it has no fixed descendant. Staggered blocks and the dock fall back to opacity if they contain one.
+
+## 7. Motion for people who asked for none
+
+**What happened.** Reduced motion shortened the animation but kept the movement.
+
+**Rule.** Reduced motion means opacity only, with the surface before the content so two screens of text never overlap. See [Accessibility](/docs/accessibility#reduced-motion).
+
+## Other things to watch
+
+- **`[hidden]` must hide.** A CSS rule like `.sheet { display: flex }` beats the `hidden` attribute. Add `[hidden] { display: none !important }`.
+- **Keep the sheet full size.** morphcard reads the sheet's rectangle as the end of the flight. A sheet that is still sliding in from CSS gives the wrong target.
+- **Fill the sheet in `prepare`.** Anything written after `open()` is not measured.
+- **One element per key on each side.** If the sheet has two `data-morph="title"` elements, the first one wins.

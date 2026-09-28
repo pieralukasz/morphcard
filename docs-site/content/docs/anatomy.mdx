@@ -1,0 +1,79 @@
+---
+title: Anatomy of the choreography
+description: What moves when, with the actual durations and easings, and why each choice was made.
+---
+
+<Video name="open-close" caption="The demo at a quarter speed. Open, hold, back." />
+
+All numbers below are for the defaults: 400 ms to open, 300 ms to close. Every part is a fraction of those durations, so changing `duration` keeps the proportions.
+
+## The surface
+
+The sheet is always full size. At the start of an open its `clip-path` is `inset(...)` cut to the card's rectangle with the card's corner radius, and it animates to `inset(0 round 0)` over 400 ms with `cubic-bezier(0.32, 0.72, 0, 1)`.
+
+Clipping instead of scaling has two effects. The sheet's own text is laid out once, at its final size, so it never stretches. And the sheet does not need a transform, which matters for `position: fixed` children (see [Pitfalls](/docs/pitfalls#6-transforms-drag-fixed-children)).
+
+If the card is partly hidden, for example under a tab bar or cut by the list's edge, the clip starts from the visible part only. When the card and sheet have different background colours, the colour animates with the clip.
+
+## The card copy
+
+A clone of the card is placed inside the sheet, exactly over the real card. It carries what the sheet does not have: the meta line, icons, the chevron, the card's border. On open these fade out in the first 140 ms (35% of 400), and the border in the first 80 ms. The clone has `aria-hidden` and `inert`, and it is removed when the transition ends.
+
+## Shared elements
+
+For each key marked with `data-morph` on both sides, morphcard measures the card element and the sheet element and decides how the pair travels.
+
+**Scale.** If both versions have the same shape, one copy flies. The sheet element starts with `translate(...) scale(s)` that puts it over the card element (transform origin `0 0`) and animates to `none`. For text, `s` is the ratio of the font sizes. For images and other boxes, it is the ratio of the widths.
+
+**Crossfade.** A scaled copy only looks right when the text wraps the same way on both sides. morphcard crossfades when:
+
+- the line count differs (a one-line route on the card, two lines in the header);
+- the card text is cut off with an ellipsis or a line clamp;
+- the width or height ratio differs from the scale by more than 0.04.
+
+Then both copies fly together along the same path. The card copy fades out over the first 160 ms (40%), the sheet copy fades in over the first 200 ms (50%). Both keep moving the whole time, so there is never a moment where one copy stands still while the other moves.
+
+**Skip.** Some pairs should not fly at all. See [Pitfalls](/docs/pitfalls). Skipped sheet elements fade in over the last 160 ms, after the flights around them have landed.
+
+## Content
+
+Blocks marked `data-morph-stagger` start at 130 ms, when the surface has enough room to show them. Each rises from `translateY(10px)` and fades in over 260 ms with `cubic-bezier(0.23, 1, 0.32, 1)`, 45 ms after the previous one. A bar marked `data-morph-dock` slides up from `translateY(100%)` starting at 160 ms, over 300 ms.
+
+Unmarked content fades in with the first block, without moving.
+
+## Background
+
+The list behind scales to 0.96 over the same 400 ms and curve as the surface, and the scrim fades from 0 to 1. The scale origin is the horizontal centre of the visible part of the list and 30% down it. On a long scrolled page this keeps the part the reader sees in place; with the default `50% 50%` the list would slide sideways and up.
+
+The background is not scaled if it contains a `position: fixed` element.
+
+## Closing
+
+Closing takes 300 ms. The reader already knows where they are going, and the list behind is waiting. Everything that moved on open moves back, with these changes:
+
+- The sheet heading fades out in the first 90 ms (30%) and the card copy fades in over the first 111 ms. The big heading gives way early, so the last thing moving is the card's own text landing on the card, not a shrinking heading over a settled list.
+- Content fades out in 111 ms and moves down with the lowest flying element, so it does not hang in place while the header leaves.
+- The card's meta line and border fade back in over the second half (150 to 300 ms), finishing with the surface.
+- The dock slides down over 180 ms.
+- The background and scrim end with the surface, at 300 ms.
+
+## Numbers in one table
+
+| Part | Open (400 ms) | Close (300 ms) |
+| --- | --- | --- |
+| Surface clip | 0 to 400 ms | 0 to 300 ms |
+| Shared flights | 0 to 400 ms | 0 to 300 ms |
+| Card copy of a crossfading text | fades out 0 to 160 ms | fades in 0 to 111 ms |
+| Sheet copy of a crossfading text | fades in 0 to 200 ms | fades out 0 to 90 ms |
+| Card meta and icons | fade out 0 to 140 ms | fade in 150 to 300 ms |
+| Staggered content | from 130 ms, 260 ms each, +45 ms | fade out 0 to 111 ms |
+| Dock | 160 to 460 ms | 0 to 180 ms |
+| Background and scrim | 0 to 400 ms | 0 to 300 ms |
+
+## Easing
+
+`cubic-bezier(0.32, 0.72, 0, 1)` for the surface, flights and background. It starts fast and spends most of its time slowing down, so a tap shows movement on the next frame and the landing is soft.
+
+`cubic-bezier(0.23, 1, 0.32, 1)` for content. It is a stronger ease-out: blocks arrive quickly and settle, so the stagger reads as a ripple instead of a queue.
+
+Fades of the card copy, meta and scrim use `ease-out`.

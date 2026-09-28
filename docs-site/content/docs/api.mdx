@@ -1,0 +1,128 @@
+---
+title: API reference
+description: createMorph, its options and the instance it returns, the useMorph hook, and the data attributes.
+---
+
+## createMorph(options)
+
+```ts
+import { createMorph } from "morphcard";
+
+const morph: Morph = createMorph(options: MorphOptions);
+```
+
+Creates a controller for one sheet. It sets `hidden` on the sheet and scrim straight away and listens for Escape and clicks on `[data-morph-close]`. Throws a `TypeError` when `sheet` is missing or when `background` or `scrim` contains the sheet.
+
+### Options
+
+| Option | Type | Default | |
+| --- | --- | --- | --- |
+| `sheet` | `HTMLElement` | required | The detail surface. `position: fixed` or `absolute`, full size. |
+| `background` | `HTMLElement \| null` | `null` | What recedes behind the sheet. Scaled and made `inert` while open. |
+| `scrim` | `HTMLElement \| null` | `null` | Dims the background. Its opacity animates 0 to 1. |
+| `prepare` | `(card) => void \| Promise<void>` | | Fill the sheet for this card. Runs before measuring. `card` is `null` for a deep link. |
+| `onStateChange` | `(state, card) => void` | | Called on every state change. |
+| `duration` | `{ open?: number; close?: number }` | `{ open: 400, close: 300 }` | Milliseconds. |
+| `easing` | `{ surface?: string; content?: string }` | see below | CSS easing strings. |
+| `stagger` | `number` | `45` | Delay between `data-morph-stagger` blocks, in ms. |
+| `backgroundScale` | `number \| false` | `0.96` | Scale of the background while open. `false` keeps it still. |
+| `reducedMotion` | `"system" \| boolean` | `"system"` | `"system"` follows `prefers-reduced-motion`. `true` forces fades. |
+| `timeScale` | `number` | `1` | Multiplies every duration and delay. `4` plays four times slower. |
+| `closeOnEscape` | `boolean` | `true` | |
+| `restoreScroll` | `boolean` | `true` | Put the list's scroll position back before measuring on close. |
+| `shared` | `string[]` | all keys | Keys allowed to fly. Other marked elements fade in place. |
+| `radius` | `number` | computed | Corner radius of the card in px. Read from the card's `border-radius` when omitted. |
+| `scroller` | `HTMLElement \| Window` | nearest scrolling ancestor | The list's scroll container, for `restoreScroll`. |
+
+Default easings:
+
+```ts
+easing: {
+  surface: "cubic-bezier(0.32, 0.72, 0, 1)", // clip, flights, background
+  content: "cubic-bezier(0.23, 1, 0.32, 1)", // staggered content, dock
+}
+```
+
+### The Morph instance
+
+```ts
+interface Morph {
+  open(card?: HTMLElement | null): Promise<boolean>;
+  close(options?: { to?: HTMLElement | null }): Promise<boolean>;
+  readonly state: "closed" | "opening" | "open" | "closing";
+  readonly card: HTMLElement | null;
+  readonly plan: MorphPlan | null;
+  setOptions(options: Partial<MorphOptions>): void;
+  destroy(): void;
+}
+```
+
+**`open(card)`** opens the sheet from `card`. Pass `null` to open without a flight, as for a deep link: the sheet fades in. The promise resolves `true` when the sheet is open and `false` when another call took over first. Calling it while the same card is closing turns the close around.
+
+**`close(options)`** closes back to the card it opened from. Pass `{ to: element }` when the list re-rendered and the card is a new element, or `{ to: null }` when there is nothing to return to (the sheet fades out). Resolves `true` once closed.
+
+**`state`** is also written to the sheet as `data-morph-state="opening" | "open" | "closing"`, and removed when closed, so CSS can react to it.
+
+**`plan`** describes the latest transition:
+
+```ts
+interface MorphPlan {
+  direction: "open" | "close";
+  choreography: "morph" | "fade";
+  reason?: SkipReason; // why it faded instead of morphing
+  reduced: boolean;
+  backgroundScaled: boolean;
+  pairs: { key: string; mode: "scale" | "crossfade" | "skip"; reason?: SkipReason }[];
+}
+
+type SkipReason =
+  | "reduced-motion"
+  | "no-card"
+  | "card-offscreen"
+  | "sheet-hidden"
+  | "not-shared"
+  | "missing-card-element"
+  | "missing-sheet-element"
+  | "sheet-element-offscreen";
+```
+
+**`setOptions(options)`** changes timing and callbacks for the next transition. The three elements cannot change; create a new instance for that.
+
+**`destroy()`** stops any transition, removes every attribute and style the library set, hides the sheet and removes the listeners.
+
+### Exported constants
+
+`defaults` holds the default timing. `choreography` holds the fractions of the duration used for each part of the transition (see [Anatomy](/docs/anatomy)). Both are read-only references; pass options to change timing.
+
+## useMorph(options)
+
+```ts
+import { useMorph } from "morphcard/react";
+
+const morph = useMorph(options?: Omit<MorphOptions, "sheet" | "background" | "scrim" | "prepare">);
+```
+
+Returns:
+
+| Field | |
+| --- | --- |
+| `sheetRef`, `backgroundRef`, `scrimRef` | Callback refs for the three elements. The instance is created once the sheet is mounted. |
+| `state` | The morph state as React state, so the component re-renders on change. |
+| `open(card, update?)` | `update` runs inside `flushSync` before measuring. Put the `setState` that fills the sheet there. |
+| `close(options?)` | Same as `Morph.close`. |
+| `instance` | The underlying `Morph`, or `null` before the sheet mounts. |
+
+Options are applied with `setOptions` after every render, so they can change freely. The instance is destroyed on unmount.
+
+## Data attributes
+
+| Attribute | Set by | |
+| --- | --- | --- |
+| `data-morph="key"` | you | Pairs a card element with a sheet element. |
+| `data-morph-mode="box" \| "text"` | you | How a pair scales: by width (`box`) or by font size (`text`). |
+| `data-morph-stagger` | you | Staggered content block in the sheet. |
+| `data-morph-dock` | you | Bar that slides up from the bottom. |
+| `data-morph-close` | you | Closes on click. |
+| `data-morph-focus` | you | Focus target in the sheet after open, or in the card after close. |
+| `data-morph-state` | library | On the sheet while it is shown. |
+| `data-morph-ghost` | library | On the temporary copy of the card inside the sheet during a transition. Removed at the end. |

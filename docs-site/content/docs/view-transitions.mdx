@@ -1,0 +1,37 @@
+---
+title: Compared with View Transitions
+description: When to use the browser's View Transitions API and when morphcard fits better.
+---
+
+Same-document view transitions (`document.startViewTransition()` with `view-transition-name`) can animate a card into a detail screen too. They are supported in Chrome and Edge 111+, Safari 18+ and Firefox 144+ ([web.dev](https://web.dev/blog/same-document-view-transitions-are-now-baseline-newly-available), [MDN: Firefox 144](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/144)).
+
+## How they differ
+
+| | View Transitions | morphcard |
+| --- | --- | --- |
+| What animates | Screenshots of the old and new state, as pseudo-elements above the page | The live elements: the sheet, the card copy, the shared elements |
+| Changing the DOM | Any change inside the callback, including a route change | The sheet must already be in the page; you fill it in `prepare` |
+| Interrupting | Starting a new transition skips the running one, so the page jumps to the latest state | The running animations reverse from where they are |
+| Text of different sizes | Old and new snapshots are images that scale with their group and crossfade | The live element scales when both versions wrap the same way; otherwise both fly and crossfade |
+| Off-screen or missing ends | An element named only on the old side fades out on top of the new state unless you remove its name first | Checked for every pair; falls back to a fade |
+| Clicks during the transition | The `::view-transition` overlay takes them unless you set `pointer-events: none` on it, and elements in the transition never receive them ([spec](https://drafts.csswg.org/css-view-transitions/)) | The list stays clickable while the sheet closes |
+| Reduced motion | Up to you, in CSS | Built in, opacity only |
+| Code size | None, it is the browser | About 11 kB gzipped |
+
+## Use View Transitions when
+
+- The transition is part of a route change and you do not want a sheet mounted next to the list.
+- Many elements change at once and you want the browser to capture them all.
+- You also want cross-document transitions between real page loads.
+- You can live with a transition that finishes before the next one starts.
+
+## Use morphcard when
+
+- The detail is a sheet above the list, like a bottom sheet or a modal detail on mobile.
+- People go back and forth quickly and you want Back to reverse an open that is still running.
+- The card title and the header differ in size and line count and should not stretch.
+- You need the fallbacks from [Pitfalls](/docs/pitfalls) without writing them.
+
+## Both at once
+
+They do not conflict. You can use View Transitions for page-level navigation and morphcard for the list-to-detail sheet inside a page. Do not give an element a `view-transition-name` and a `data-morph` key used in the same interaction: both will try to animate it.

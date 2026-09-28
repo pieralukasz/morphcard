@@ -1,0 +1,41 @@
+---
+title: Interruptions and state
+description: What happens when open and close overlap, how the state machine works, and why cleanup is safe.
+---
+
+<Video name="interrupt" caption="Back pressed 150 ms into the open, at a quarter speed. The same animations turn around." />
+
+## States
+
+A morph is always in one of four states: `closed`, `opening`, `open`, `closing`. Read it from `morph.state`, from `onStateChange`, or from the sheet's `data-morph-state` attribute.
+
+| Call | closed | opening | open | closing |
+| --- | --- | --- | --- | --- |
+| `open(card)` | starts opening | same card: waits; other card: ignored, resolves `false` | same card: resolves `true`; other card: resolves `false` | same card: reverses; other card: finishes the close and opens the new card |
+| `close()` | resolves `true` | reverses | starts closing | waits |
+
+## Reversing instead of jumping
+
+When `close()` arrives during an open, morphcard does not build a new transition. It takes the animations that are running, seeks them all to the same point on one clock, and sets a negative playback rate. Everything turns around from exactly where it is on screen.
+
+The speed changes too: the reversed open plays at `400 / 300` of its speed, so it takes the time a close would take from that point. The same happens the other way when the same card is opened again during a close.
+
+A close that arrives before the first frame of an open (for example inside the same click handler) skips straight to closed. There is nothing on screen to reverse.
+
+## A newer transition owns the state
+
+Every transition gets a generation number. When a transition finishes, it checks that it is still the latest before touching anything. An older run that finishes late cannot hide the sheet, remove a newer run's ghost copy or release its focus.
+
+This covers sequences like: open card A, close, click card B while A is still shrinking. The close of A finishes at once and B opens from its own card.
+
+## Clicks during a transition
+
+While the surface is moving, the sheet and scrim have the `inert` attribute. Clicks pass through to the list below, so a card can be clicked during a close, and nothing inside the sheet can take focus half-way. On open, the lock is lifted half-way through (200 ms), so a quick double click does not land on the sheet's content.
+
+The background is `inert` from the start of an open and is released as soon as a close starts.
+
+## Cleanup
+
+After every sequence the page is left exactly as it was before the first open: no ghost copies, no `clip-path`, no inline `transform` or `opacity`, no `inert` or `tabindex` added by the library. The browser tests check this by comparing every attribute on every element before and after, for plain open and close, close during open, open during close, double clicks, random bursts of calls and `destroy()` in the middle of a transition.
+
+No inline styles are written on your elements. Animations use `fill: "both"` while they run, and the open state (background scale, scrim) is held by zero-length animations that are cancelled on close.
