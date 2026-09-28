@@ -1,8 +1,8 @@
 // React fixture for the browser tests: the same deliveries list, driven by
-// useMorph from morphcard/react. Built by tsdown.fixtures.config.ts.
+// useMorph from morphcard. Built by tsdown.fixtures.config.ts.
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { useMorph } from "../../../src/react";
+import { useMorph } from "../../../src/index";
 import { deliveries } from "../../../examples/shared/data.js";
 
 type Delivery = (typeof deliveries)[number];

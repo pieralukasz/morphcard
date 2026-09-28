@@ -18,6 +18,27 @@ export function toBox(rect: { left: number; top: number; width: number; height: 
   return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
 }
 
+/**
+ * Screen pixels per CSS pixel of an element: its rendered width over its
+ * layout width. Not 1 when an ancestor is scaled (a preview frame shrunk to
+ * fit, a zoomed canvas). Falls back to 1 when either size is unusable.
+ */
+export function unitOf(rendered: number, layout: number): number {
+  if (!(rendered > 0) || !(layout > 0)) return 1;
+  const unit = rendered / layout;
+  return Math.abs(unit - 1) < 0.001 ? 1 : unit;
+}
+
+/**
+ * A box measured on screen, in the CSS pixels of a scaled subtree. Clip
+ * insets and transforms are written in those pixels, so every measured box
+ * goes through this before it becomes a keyframe.
+ */
+export function toLocal(b: Box, unit: number): Box {
+  if (unit === 1) return b;
+  return { left: b.left / unit, top: b.top / unit, width: b.width / unit, height: b.height / unit };
+}
+
 export function area(b: Box | null): number {
   return b ? Math.max(0, b.width) * Math.max(0, b.height) : 0;
 }

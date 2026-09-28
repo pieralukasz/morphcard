@@ -11,6 +11,8 @@ import {
   parseRadius,
   placeOver,
   planPair,
+  toLocal,
+  unitOf,
   visibleRatio,
 } from "../../src/geometry";
 
@@ -164,5 +166,29 @@ describe("transforms", () => {
     const visible = box(0, 0, 1280, 800);
     expect(backgroundOrigin(page, visible)).toBe("640px 1240px");
     expect(backgroundOrigin(box(0, 0, 400, 1000), null)).toBe("200px 300px");
+  });
+});
+
+describe("scaled ancestors", () => {
+  it("unitOf is rendered width over layout width, and 1 when unusable", () => {
+    expect(unitOf(234, 390)).toBeCloseTo(0.6, 5);
+    expect(unitOf(390, 390)).toBe(1);
+    expect(unitOf(390.2, 390)).toBe(1);
+    expect(unitOf(0, 390)).toBe(1);
+    expect(unitOf(200, 0)).toBe(1);
+    expect(unitOf(Number.NaN, 390)).toBe(1);
+  });
+
+  it("toLocal converts screen boxes to the CSS pixels of the scaled subtree", () => {
+    expect(toLocal(box(60, 120, 234, 30), 0.6)).toEqual(box(100, 200, 390, 50));
+    const same = box(1, 2, 3, 4);
+    expect(toLocal(same, 1)).toBe(same);
+  });
+
+  it("an inset clip from converted boxes matches the unscaled one", () => {
+    const sheet = box(0, 60, 390, 740);
+    const card = box(16, 200, 358, 120);
+    const scaled = (b: ReturnType<typeof box>) => box(b.left * 0.5, b.top * 0.5, b.width * 0.5, b.height * 0.5);
+    expect(insetClip(toLocal(scaled(card), 0.5), toLocal(scaled(sheet), 0.5), 16)).toBe(insetClip(card, sheet, 16));
   });
 });

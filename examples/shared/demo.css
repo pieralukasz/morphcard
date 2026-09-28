@@ -75,6 +75,35 @@
   --mc-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 12px rgb(0 0 0 / 0.25);
 }
 
+/* Forced light inside a dark page (the docs playground has a theme switch). */
+:root[data-theme="dark"] .mc-demo.is-light,
+.dark .mc-demo.is-light {
+  --mc-page: #f3f5f8;
+  --mc-card: #ffffff;
+  --mc-sunken: #eceff4;
+  --mc-overlay: rgb(15 23 42 / 0.42);
+  --mc-text: #0f172a;
+  --mc-text-2: #4b5870;
+  --mc-muted: #5f6b80;
+  --mc-border: #d9dfe8;
+  --mc-border-strong: #b7c1d0;
+  --mc-focus: #4f46e5;
+  --mc-action: #111827;
+  --mc-action-text: #ffffff;
+  --mc-soft: #e8ecf3;
+  --mc-ok: #166534;
+  --mc-ok-bg: #e7f5ec;
+  --mc-scheduled-bg: #eef0f4;
+  --mc-scheduled: #475569;
+  --mc-transit-bg: #ecebfd;
+  --mc-transit: #4338ca;
+  --mc-delivered-bg: #e6f4ea;
+  --mc-delivered: #166534;
+  --mc-delayed-bg: #fdf1dc;
+  --mc-delayed: #8a4b0f;
+  --mc-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px rgb(15 23 42 / 0.05);
+}
+
 .mc-demo *,
 .mc-demo *::before,
 .mc-demo *::after {

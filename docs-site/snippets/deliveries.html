@@ -1,0 +1,24 @@
+<main class="list">
+  <article class="card" data-id="2042">
+    <button aria-label="Open Lyon to Milan"></button>
+    <h3 data-morph="route">Lyon → Milan</h3>
+    <p data-morph="company">Bellweather Foods</p>
+    <span class="badge" data-morph="status">In transit</span>
+    <p class="meta">2 of 3 stops done</p>
+  </article>
+  <!-- more cards -->
+</main>
+
+<div class="scrim" data-morph-close></div>
+
+<section class="sheet" role="dialog" aria-modal="true" aria-label="Delivery">
+  <button data-morph-close data-morph-focus data-morph-stagger>Back</button>
+  <header>
+    <h1 data-morph="route"></h1>
+    <p data-morph="company"></p>
+    <span class="badge" data-morph="status"></span>
+  </header>
+  <div data-morph-stagger>…stops…</div>
+  <div data-morph-stagger>…cargo…</div>
+  <footer data-morph-dock>…actions…</footer>
+</section>

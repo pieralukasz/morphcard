@@ -1,0 +1,20 @@
+/* The sheet and scrim cover the screen (or a positioned frame). */
+.sheet,
+.scrim {
+  position: fixed;
+  inset: 0;
+}
+
+.sheet {
+  overflow: auto;
+  background: white;
+}
+
+.scrim {
+  background: rgb(15 23 42 / 0.4);
+}
+
+/* morphcard hides the sheet and scrim with the hidden attribute. */
+[hidden] {
+  display: none !important;
+}

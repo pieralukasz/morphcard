@@ -1,5 +1,6 @@
 /**
- * React binding. The sheet stays mounted; the hook shows and hides it.
+ * useMorph: the React API. The sheet stays mounted; the hook shows and hides
+ * it. The engine underneath (createMorph in ./morph) has no React in it.
  *
  *   const morph = useMorph();
  *   <li onClick={(e) => morph.open(e.currentTarget, () => setItem(item))}>…</li>
@@ -99,4 +100,3 @@ export function useMorph(options: UseMorphOptions = {}): UseMorph {
   );
 }
 
-export type { CloseOptions, Morph, MorphOptions, MorphPlan, MorphState } from "./morph";

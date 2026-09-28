@@ -13,7 +13,7 @@
   .device { width: var(--w, 390px); height: var(--h, 800px); }
 </style>
 <script type="importmap">
-  { "imports": { "morphcard": "/dist/index.js" } }
+  { "imports": { "morphcard": "/examples/dist/morphcard.js" } }
 </script>
 </head>
 <body>
@@ -22,6 +22,7 @@
   // Query parameters:
   //   layout=page|frame  the window scrolls, or a fixed-size box scrolls
   //   w, h               frame size in px (default 390 x 800)
+  //   zoom               scale the frame with a CSS transform (frame layout)
   //   theme=dark         dark colours
   //   slow=4             play every transition four times slower
   //   reduce             force reduced motion
@@ -34,6 +35,11 @@
   const app = document.getElementById("app");
   if (layout === "frame") {
     app.classList.add("device");
+    // zoom=0.6 shrinks the frame with a transform, like a preview scaled to fit.
+    if (params.get("zoom")) {
+      app.style.transform = `scale(${params.get("zoom")})`;
+      app.style.transformOrigin = "0 0";
+    }
     if (params.get("w")) app.style.setProperty("--w", `${params.get("w")}px`);
     if (params.get("h")) app.style.setProperty("--h", `${params.get("h")}px`);
   }

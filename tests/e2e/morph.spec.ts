@@ -542,3 +542,59 @@ test.describe("scroll and focus", () => {
     void errors;
   });
 });
+
+test.describe("scaled frame", () => {
+  // A preview frame shrunk with a CSS transform (the docs site does this to
+  // fit a desktop window on a small screen). Rects come back in screen
+  // pixels; clip insets and transforms must be written in the frame's own.
+  test("the surface starts exactly on the card and flights land on their targets", async ({ page, errors }) => {
+    await gotoDemo(page, "layout=frame&w=390&h=800&zoom=0.5");
+    await clickCard(page, "2042");
+    await pauseAt(page, 0);
+    const start = await page.evaluate(() => {
+      const card = window.demo.card("2042").getBoundingClientRect();
+      const sheet = window.demo.sheet as HTMLElement;
+      const s = sheet.getBoundingClientRect();
+      const clip = getComputedStyle(sheet).clipPath;
+      // Computed clip-path uses the shortest inset() shorthand: 1 to 4 values,
+      // expanded like margin (top, right = top, bottom = top, left = right).
+      const values = (clip.match(/inset\(([^)]*?)(?: round|\))/)?.[1] ?? "0")
+        .trim()
+        .split(/\s+/)
+        .map(Number.parseFloat);
+      const unit = s.width / sheet.offsetWidth;
+      const top = values[0] ?? 0;
+      const right = values[1] ?? top;
+      const bottom = values[2] ?? top;
+      const left = values[3] ?? right;
+      return {
+        unit,
+        clip: { left: s.left + left * unit, top: s.top + top * unit, right: s.right - right * unit, bottom: s.bottom - bottom * unit },
+        card: { left: card.left, top: card.top, right: card.right, bottom: card.bottom },
+        route: window.demo.sheet.querySelector(".mc-head [data-morph='route']").getBoundingClientRect().left,
+        cardRoute: window.demo.card("2042").querySelector("[data-morph='route']").getBoundingClientRect().left,
+      };
+    });
+    expect(start.unit).toBeCloseTo(0.5, 3);
+    for (const side of ["left", "top", "right", "bottom"] as const) {
+      expect(Math.abs(start.clip[side] - start.card[side]), side).toBeLessThan(1);
+    }
+    expect(Math.abs(start.route - start.cardRoute)).toBeLessThan(1);
+
+    await resume(page);
+    await settled(page, "open");
+    const landed = await page.evaluate(() => {
+      const r = window.demo.sheet.querySelector(".mc-head [data-morph='route']") as HTMLElement;
+      return { transform: getComputedStyle(r).transform, clip: getComputedStyle(window.demo.sheet).clipPath };
+    });
+    expect(landed.transform).toBe("none");
+    expect(landed.clip).toBe("none");
+
+    await page.keyboard.press("Escape");
+    await settled(page, "closed");
+    const signature = await domSignature(page);
+    expect(signature.ghosts).toBe(0);
+    expect(signature.animations).toBe(0);
+    void errors;
+  });
+});

@@ -18,6 +18,8 @@ import {
   parseRadius,
   placeOver,
   planPair,
+  toLocal,
+  unitOf,
 } from "./geometry";
 import {
   FOCUSABLE,
@@ -33,13 +35,13 @@ import {
   fontSizeOf,
   hasFixedDescendant,
   isClipped,
-  rectOf,
+  rectOf as screenRectOf,
   restoreScroll,
   saveScroll,
   scrollerOf,
   sharedKeys,
   textLines,
-  visibleBoxOf,
+  visibleBoxOf as screenVisibleBoxOf,
 } from "./dom";
 
 export type MorphState = "closed" | "opening" | "open" | "closing";
@@ -197,6 +199,8 @@ interface Geometry {
   /** The visible part of the card: where the surface starts and ends. */
   clipBox: Box;
   sheetBox: Box;
+  /** Screen pixels per CSS pixel of the sheet; boxes above are in CSS pixels. */
+  unit: number;
   radius: number;
   sheetRadius: number;
   colors: [string, string] | null;
@@ -314,6 +318,16 @@ export function createMorph(options: MorphOptions): Morph {
 
   // ---------------------------------------------------------------- measure
 
+  // Boxes are measured on screen and used in the sheet's CSS pixels. They
+  // differ when an ancestor of the demo is scaled (a preview shrunk to fit).
+  let unit = 1;
+  const rectOf = (el: Element): Box => toLocal(screenRectOf(el), unit);
+  const visibleBoxOf = (el: Element): Box | null => {
+    const v = screenVisibleBoxOf(el);
+    return v ? toLocal(v, unit) : null;
+  };
+  const measureUnit = (el: HTMLElement) => unitOf(el.getBoundingClientRect().width, el.offsetWidth);
+
   function keys(): string[] {
     return sharedKeys(sheet);
   }
@@ -376,6 +390,7 @@ export function createMorph(options: MorphOptions): Morph {
   }
 
   function measure(direction: "open" | "close", card: HTMLElement | null, isReduced: boolean): Geometry {
+    unit = measureUnit(sheet);
     const sheetBox = rectOf(sheet);
     let reason: SkipReason | undefined;
     let cardBox = ZERO;
@@ -439,6 +454,7 @@ export function createMorph(options: MorphOptions): Morph {
       cardBox,
       clipBox,
       sheetBox,
+      unit,
       radius,
       sheetRadius,
       colors,
@@ -528,7 +544,7 @@ export function createMorph(options: MorphOptions): Morph {
     sheet.appendChild(ghost);
     r.ghosts.push(ghost);
     // Correct for borders, scroll offsets or an unexpected containing block.
-    const placed = rectOf(ghost);
+    const placed = toLocal(screenRectOf(ghost), g.unit);
     const dx = g.cardBox.left - placed.left;
     const dy = g.cardBox.top - placed.top;
     if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
@@ -879,6 +895,7 @@ export function createMorph(options: MorphOptions): Morph {
     if (card) s.scroll = saveScroll(hooks.scroller ?? scrollerOf(card));
     if (background && !isReduced && timing.backgroundScale !== false && !hasFixedDescendant(background)) {
       s.scaled = true;
+      unit = measureUnit(background);
       s.origin = backgroundOrigin(rectOf(background), visibleBoxOf(background));
     }
     sheet.hidden = false;

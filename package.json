@@ -1,16 +1,18 @@
 {
   "name": "morphcard",
   "version": "0.1.0",
-  "description": "A card that expands into a full detail screen and collapses back, with shared-element choreography. Framework-agnostic, zero dependencies, Web Animations API.",
+  "description": "React hook for a card that grows into a full detail screen and shrinks back, with shared elements flying between the two. Runs in any browser, installed PWAs and WebViews (not React Native). No dependencies besides React.",
   "keywords": [
+    "react",
+    "react-hook",
     "animation",
-    "shared-element",
-    "morph",
+    "shared-element-transition",
     "card",
+    "detail-view",
     "transition",
-    "web-animations",
-    "flip",
-    "react"
+    "web-animations-api",
+    "pwa",
+    "webview"
   ],
   "homepage": "https://morphcard.lucaspiera.com",
   "bugs": "https://github.com/pieralukasz/morphcard/issues",
@@ -27,10 +29,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./react": {
-      "types": "./dist/react.d.ts",
-      "default": "./dist/react.js"
-    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",
@@ -44,26 +42,19 @@
   },
   "scripts": {
     "build": "tsdown",
+    "build:examples": "tsdown -c tsdown.fixtures.config.ts",
     "prepare": "tsdown",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "pnpm build && tsdown -c tsdown.fixtures.config.ts && playwright test",
-    "serve": "node scripts/serve.mjs",
+    "test:e2e": "pnpm build && pnpm build:examples && playwright test",
+    "serve": "pnpm build:examples && node scripts/serve.mjs",
     "check:package": "publint",
     "prepublishOnly": "pnpm build && pnpm typecheck && pnpm test"
   },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
