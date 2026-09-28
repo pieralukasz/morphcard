@@ -600,11 +600,14 @@
   overflow: hidden;
 }
 
-/* Same 3:1 shape on the card and in the sheet, so the cover scales as one box. */
+/*
+ * Square on the card, a 3:1 banner in the sheet. The two shapes differ, so
+ * the library flies the cover as one frame that changes shape.
+ */
 .mch-cover {
   display: grid;
   place-items: center;
-  aspect-ratio: 3 / 1;
+  aspect-ratio: 1 / 1;
   background: linear-gradient(135deg, hsl(var(--h) 72% 64%), hsl(calc(var(--h) + 28) 68% 46%));
   color: rgb(255 255 255 / 0.92);
 }
@@ -619,6 +622,7 @@
 }
 
 .mch-cover.is-large {
+  aspect-ratio: 3 / 1;
   margin-bottom: 20px;
   border-radius: 14px;
 }

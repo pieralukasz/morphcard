@@ -35,6 +35,8 @@ For each key marked with `data-morph` on both sides, the hook measures the card 
 
 Then both copies fly together along the same path. The card copy fades out over the first 160 ms (40%), the sheet copy fades in over the first 200 ms (50%). Both keep moving the whole time, so there is never a moment where one copy stands still while the other moves.
 
+**Pictures that change shape.** A square thumbnail that becomes a wide banner, or a 4:3 poster cropped from a tall video, would show two pictures of different sizes if each copy scaled on its own. So a box pair that crossfades flies as one frame instead: a rectangle moves from the card to the sheet, and both copies are cut to it with a clip-path. An image or a video on the card counts as a crop of the large one, at its `object-position`, so it stays in place inside the large picture while they swap. A plain box (a gradient, a colour tile) simply covers the frame. The reader sees one picture whose frame changes shape.
+
 **Skip.** Some pairs should not fly at all. See [Pitfalls](/docs/pitfalls). Skipped sheet elements fade in over the last 160 ms, after the flights around them have landed.
 
 ## Content

@@ -62,7 +62,7 @@ Images fly by width. Mark the thumbnail and the large image with the same key:
 </section>
 ```
 
-When the thumbnail is cropped to a different aspect ratio than the large image (4:3 against 16:9), the ratios differ by more than 0.04 and the pair crossfades while flying. Use `object-fit: cover` on both so neither copy is squashed.
+When the thumbnail is cropped to a different aspect ratio than the large image (4:3 against 16:9), the photo does not stretch. Its frame changes shape while it flies, and the thumbnail stays in place inside the large photo, as a crop of it. Use `object-fit: cover` on both, and set the thumbnail's `object-position` when it is not cropped from the centre.
 
 Set `backgroundScale: false` if the gallery is a grid of small tiles: scaling a dense grid reads as noise.
 

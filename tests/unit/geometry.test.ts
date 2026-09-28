@@ -3,6 +3,7 @@ import {
   ASPECT_TOLERANCE,
   backgroundOrigin,
   box,
+  fillFrames,
   fullClip,
   insetClip,
   intersect,
@@ -190,5 +191,101 @@ describe("scaled ancestors", () => {
     const card = box(16, 200, 358, 120);
     const scaled = (b: ReturnType<typeof box>) => box(b.left * 0.5, b.top * 0.5, b.width * 0.5, b.height * 0.5);
     expect(insetClip(toLocal(scaled(card), 0.5), toLocal(scaled(sheet), 0.5), 16)).toBe(insetClip(card, sheet, 16));
+  });
+});
+
+describe("fillFrames: a picture that changes shape", () => {
+  const parse = (f: { transform: string; clipPath: string }) => {
+    const [tx, ty, sc] = (f.transform.match(/-?[\d.]+/g) ?? []).map(Number);
+    const [t, r, b, l] = (f.clipPath.match(/-?[\d.]+/g) ?? []).map(Number);
+    return { tx: tx ?? 0, ty: ty ?? 0, s: sc ?? 1, t: t ?? 0, r: r ?? 0, b: b ?? 0, l: l ?? 0 };
+  };
+  type F = { transform: string; clipPath: string };
+  // What part of the screen a layer laid out at `at` shows.
+  const shown = (at: ReturnType<typeof box>, f: F) => {
+    const p = parse(f);
+    const left = at.left + p.tx;
+    const top = at.top + p.ty;
+    return [left + p.l * p.s, top + p.t * p.s, left + (at.width - p.r) * p.s, top + (at.height - p.b) * p.s];
+  };
+  // Where a point of a layer's own box lands on screen.
+  const point = (at: ReturnType<typeof box>, f: F, x: number, y: number) => {
+    const p = parse(f);
+    return [at.left + p.tx + x * p.s, at.top + p.ty + y * p.s];
+  };
+  // A 4:3 poster cropped from the top of a tall 780x1600 video.
+  const small = box(40, 500, 176, 132);
+  const big = box(300, 40, 272, 558);
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+  for (const align of [
+    [0.5, 0],
+    [0.5, 0.5],
+  ] as [number, number][]) {
+    it(`both copies show the same point of the picture in the same place (align ${align})`, () => {
+      const f = fillFrames({ big, small, from: small, to: big, align });
+      expect(f.big).toHaveLength(f.small.length);
+      // The small picture is the large one scaled by k and cropped at align.
+      const k = Math.max(small.width / big.width, small.height / big.height);
+      const cx = align[0] * (big.width * k - small.width);
+      const cy = align[1] * (big.height * k - small.height);
+      f.big.forEach((bf, i) => {
+        const sf = f.small[i] as F;
+        for (const [x, y] of [
+          [0, 0],
+          [small.width, small.height],
+          [small.width / 2, small.height / 3],
+        ] as [number, number][]) {
+          const a = point(small, sf, x, y);
+          const b = point(big, bf, (x + cx) / k, (y + cy) / k);
+          expect(a[0]).toBeCloseTo(b[0] as number, 1);
+          expect(a[1]).toBeCloseTo(b[1] as number, 1);
+        }
+      });
+    });
+  }
+
+  it("the large copy fills the moving frame and the small one stays inside it", () => {
+    const f = fillFrames({ big, small, from: small, to: big, align: [0.5, 0] });
+    f.big.forEach((bf, i) => {
+      const t = i / (f.big.length - 1);
+      const frame = [lerp(40, 300, t), lerp(500, 40, t), lerp(216, 572, t), lerp(632, 598, t)];
+      const b = shown(big, bf);
+      const s = shown(small, f.small[i] as F);
+      b.forEach((n, j) => expect(n).toBeCloseTo(frame[j] as number, 1));
+      expect(s[0]).toBeGreaterThanOrEqual((frame[0] as number) - 0.01);
+      expect(s[1]).toBeGreaterThanOrEqual((frame[1] as number) - 0.01);
+      expect(s[2]).toBeLessThanOrEqual((frame[2] as number) + 0.01);
+      expect(s[3]).toBeLessThanOrEqual((frame[3] as number) + 0.01);
+    });
+  });
+
+  it("starts on the card picture and ends on the sheet picture, untransformed", () => {
+    const f = fillFrames({ big, small, from: small, to: big, align: [0.5, 0] });
+    expect(f.small[0]?.transform).toBe("translate(0px, 0px) scale(1)");
+    expect(f.big.at(-1)?.transform).toBe("translate(0px, 0px) scale(1)");
+    expect(f.big[0]?.offset).toBe(0);
+    expect(f.big.at(-1)?.offset).toBe(1);
+  });
+
+  it("two different boxes (crop: false) each cover the same moving frame", () => {
+    const f = fillFrames({ big, small, from: small, to: big, crop: false });
+    f.big.forEach((bf, i) => {
+      const a = shown(big, bf);
+      const b = shown(small, f.small[i] as F);
+      a.forEach((n, j) => expect(n).toBeCloseTo(b[j] as number, 1));
+    });
+  });
+
+  it("never uses negative insets", () => {
+    const f = fillFrames({ big, small, from: big, to: small, align: [0.5, 0.5], radius: [14, 10] });
+    for (const fr of [...f.big, ...f.small]) {
+      const p = parse(fr);
+      for (const n of [p.t, p.r, p.b, p.l]) expect(n).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("returns nothing for a picture without a size", () => {
+    expect(fillFrames({ big: box(0, 0, 0, 10), small, from: small, to: big })).toEqual({ big: [], small: [] });
   });
 });

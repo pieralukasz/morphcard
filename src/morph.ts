@@ -12,6 +12,7 @@ import {
   area,
   backgroundOrigin,
   fullClip,
+  fillFrames,
   insetClip,
   intersect,
   isOnScreen,
@@ -196,6 +197,12 @@ interface PairGeometry extends PairReport {
   srcBox: Box;
   dstBox: Box;
   scale: number;
+  /**
+   * A picture that changes shape on the way (a crossfading box): corner
+   * radii [card, sheet] and where the card's crop sits in the large picture.
+   * Both copies then show one picture in one moving frame.
+   */
+  fill?: { radius: [number, number]; align: [number, number]; crop: boolean };
 }
 
 interface Geometry {
@@ -343,6 +350,28 @@ export function createMorph(options: MorphOptions): Morph {
     return !hooks.shared || hooks.shared.includes(key);
   }
 
+  function radiusOf(el: Element, width: number): number {
+    return parseRadius(getComputedStyle(el).borderTopLeftRadius, width);
+  }
+
+  /**
+   * A card picture that is an image or a video is a crop of the large one, at
+   * its object-position. A plain box (a gradient, an icon tile) is not.
+   */
+  function cropOf(el: Element): { align: [number, number]; crop: boolean } {
+    const media = /^(img|video|picture|canvas)$/i.test(el.tagName) ? el : el.querySelector("img, video, canvas");
+    const pos = media ? getComputedStyle(media).objectPosition : "";
+    const part = (v: string | undefined) => {
+      if (!v) return 0.5;
+      if (v === "left" || v === "top") return 0;
+      if (v === "right" || v === "bottom") return 1;
+      if (v.endsWith("%")) return Math.min(1, Math.max(0, Number.parseFloat(v) / 100));
+      return 0.5;
+    };
+    const [x, y] = pos.trim().split(/\s+/);
+    return { align: [part(x), part(y)], crop: Boolean(media) };
+  }
+
   function pairFor(key: string, card: HTMLElement): PairGeometry {
     const src = findShared(card, key);
     const dst = findShared(sheet, key);
@@ -393,6 +422,10 @@ export function createMorph(options: MorphOptions): Morph {
       srcBox,
       dstBox,
       scale: decision.scale,
+      fill:
+        decision.crossfade && mode === "box"
+          ? { radius: [radiusOf(src, srcBox.width), radiusOf(dst, dstBox.width)], ...cropOf(src) }
+          : undefined,
     };
   }
 
@@ -570,6 +603,20 @@ export function createMorph(options: MorphOptions): Morph {
     if (scrim) play(r, scrim, back ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }], duration, 0, EASE_OUT);
   }
 
+  function fillOf(p: PairGeometry, direction: "open" | "close") {
+    const f = p.fill ?? { radius: [0, 0] as [number, number], align: [0.5, 0.5] as [number, number], crop: true };
+    const open = direction === "open";
+    return fillFrames({
+      big: p.dstBox,
+      small: p.srcBox,
+      from: open ? p.srcBox : p.dstBox,
+      to: open ? p.dstBox : p.srcBox,
+      align: f.align,
+      crop: f.crop,
+      radius: open ? f.radius : [f.radius[1], f.radius[0]],
+    });
+  }
+
   function buildOpen(r: Run, g: Geometry) {
     const D = timing.duration.open * timing.timeScale;
     const k = choreography.open;
@@ -589,10 +636,12 @@ export function createMorph(options: MorphOptions): Morph {
       play(
         r,
         p.dst,
-        [
-          { transform: placeOver(p.dstBox, p.srcBox, p.scale), transformOrigin: "0 0" },
-          { transform: "none", transformOrigin: "0 0" },
-        ],
+        p.fill
+          ? fillOf(p, "open").big
+          : [
+              { transform: placeOver(p.dstBox, p.srcBox, p.scale), transformOrigin: "0 0" },
+              { transform: "none", transformOrigin: "0 0" },
+            ],
         D,
         0,
         surface,
@@ -603,10 +652,12 @@ export function createMorph(options: MorphOptions): Morph {
         play(
           r,
           copy,
-          [
-            { transform: "none", transformOrigin: "0 0" },
-            { transform: placeOver(p.srcBox, p.dstBox, 1 / p.scale), transformOrigin: "0 0" },
-          ],
+          p.fill
+            ? fillOf(p, "open").small
+            : [
+                { transform: "none", transformOrigin: "0 0" },
+                { transform: placeOver(p.srcBox, p.dstBox, 1 / p.scale), transformOrigin: "0 0" },
+              ],
           D,
           0,
           surface,
@@ -658,10 +709,12 @@ export function createMorph(options: MorphOptions): Morph {
       play(
         r,
         p.dst,
-        [
-          { transform: "none", transformOrigin: "0 0" },
-          { transform: placeOver(p.dstBox, p.srcBox, p.scale), transformOrigin: "0 0" },
-        ],
+        p.fill
+          ? fillOf(p, "close").big
+          : [
+              { transform: "none", transformOrigin: "0 0" },
+              { transform: placeOver(p.dstBox, p.srcBox, p.scale), transformOrigin: "0 0" },
+            ],
         C,
         0,
         surface,
@@ -674,10 +727,12 @@ export function createMorph(options: MorphOptions): Morph {
         play(
           r,
           copy,
-          [
-            { transform: placeOver(p.srcBox, p.dstBox, 1 / p.scale), transformOrigin: "0 0" },
-            { transform: "none", transformOrigin: "0 0" },
-          ],
+          p.fill
+            ? fillOf(p, "close").small
+            : [
+                { transform: placeOver(p.srcBox, p.dstBox, 1 / p.scale), transformOrigin: "0 0" },
+                { transform: "none", transformOrigin: "0 0" },
+              ],
           C,
           0,
           surface,

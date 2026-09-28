@@ -96,6 +96,9 @@ const trips: Trip[] = [
 ];
 
 function Cover({ trip, large }: { trip: Trip; large?: boolean }) {
+  // The square cover turns into a wide banner. Both copies fill the same
+  // rectangle while they crossfade, but a centred icon would be two sizes in
+  // it, so the banner has none: the card's icon fades out as it grows.
   return (
     <div
       className={`mch-cover${large ? " is-large" : ""}`}
@@ -103,9 +106,11 @@ function Cover({ trip, large }: { trip: Trip; large?: boolean }) {
       data-morph-mode="box"
       style={{ ["--h" as string]: trip.hue }}
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d={trip.glyph} />
-      </svg>
+      {large ? null : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d={trip.glyph} />
+        </svg>
+      )}
     </div>
   );
 }

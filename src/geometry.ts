@@ -165,6 +165,115 @@ export function placeOver(at: Box, over: Box, scale: number): string {
   return `translate(${px(over.left - at.left)}, ${px(over.top - at.top)}) scale(${Math.round(scale * 10000) / 10000})`;
 }
 
+/** Keyframes that move one copy of a crossfading picture. */
+export interface FillFrame {
+  [property: string]: string | number;
+  offset: number;
+  transform: string;
+  transformOrigin: string;
+  clipPath: string;
+}
+
+/** How many steps a picture flight is sampled in. Enough for sub-pixel error on a full-screen flight. */
+export const FILL_STEPS = 16;
+
+export interface FillInput {
+  /** Where the large picture (the sheet's element) is laid out. */
+  big: Box;
+  /** Where the small picture (the card's element) is laid out. */
+  small: Box;
+  /** The visible rectangle at the start and at the end. */
+  from: Box;
+  to: Box;
+  /**
+   * Where the small picture sits inside the large one, per axis: 0 start,
+   * 0.5 centre, 1 end. Read from the card picture's object-position.
+   */
+  align?: [number, number];
+  /**
+   * true (default): the small picture is a crop of the large one (an image
+   * or a video with object-fit: cover), so it keeps its place inside it.
+   * false: two different boxes (a gradient, an icon tile); each covers the
+   * moving frame on its own.
+   */
+  crop?: boolean;
+  /** Corner radius at the start and at the end, in px. */
+  radius?: [number, number];
+  steps?: number;
+}
+
+/**
+ * Frames for a picture that changes shape on the way: a square thumbnail
+ * into a wide banner, a cropped poster into a tall video. The small picture
+ * is treated as a crop of the large one, the way `object-fit: cover` crops
+ * it. A rectangle moves from the card to the sheet; the large copy covers it
+ * and both copies are cut to it with a clip-path. The small copy is scaled so
+ * that it shows the same part of the picture at the same size and place as
+ * the large copy under it. So while the two copies swap, the reader sees one
+ * picture whose frame changes shape: never two pictures of different sizes,
+ * never a zoom into a crop.
+ *
+ * The rectangle moves linearly; the effect's easing shapes it in time. The
+ * frames are sampled because a clip-path inside a changing scale is not linear.
+ */
+export function fillFrames(input: FillInput): { big: FillFrame[]; small: FillFrame[] } {
+  const { big, small, from, to } = input;
+  const [ax, ay] = input.align ?? [0.5, 0.5];
+  const [r0, r1] = input.radius ?? [0, 0];
+  const steps = input.steps ?? FILL_STEPS;
+  const out = { big: [] as FillFrame[], small: [] as FillFrame[] };
+  if (!(big.width > 0 && big.height > 0 && small.width > 0 && small.height > 0)) return out;
+  // The large picture scaled by k covers the small one: the small picture is
+  // that, cropped at `align`.
+  const k = Math.max(small.width / big.width, small.height / big.height);
+  const cropX = ax * (big.width * k - small.width);
+  const cropY = ay * (big.height * k - small.height);
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  const frame = (at: Box, left: number, top: number, s: number, rect: Box, radius: number, offset: number): FillFrame => {
+    const c = (n: number) => px(Math.max(0, n) / s);
+    const inset = [
+      c(rect.top - top),
+      c(left + at.width * s - (rect.left + rect.width)),
+      c(top + at.height * s - (rect.top + rect.height)),
+      c(rect.left - left),
+    ];
+    return {
+      offset,
+      transform: `translate(${px(left - at.left)}, ${px(top - at.top)}) scale(${Math.round(s * 10000) / 10000})`,
+      transformOrigin: "0 0",
+      clipPath: `inset(${inset.join(" ")} round ${px(radius / s)})`,
+    };
+  };
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const offset = Math.round(t * 10000) / 10000;
+    const rect = box(
+      lerp(from.left, to.left, t),
+      lerp(from.top, to.top, t),
+      lerp(from.width, to.width, t),
+      lerp(from.height, to.height, t),
+    );
+    const radius = lerp(r0, r1, t);
+    // The large copy covers the rectangle.
+    const sb = Math.max(rect.width / big.width, rect.height / big.height);
+    const bl = rect.left + ax * (rect.width - big.width * sb);
+    const bt = rect.top + ay * (rect.height - big.height * sb);
+    out.big.push(frame(big, bl, bt, sb, rect, radius, offset));
+    if (input.crop === false) {
+      // Each box covers the frame on its own.
+      const s2 = Math.max(rect.width / small.width, rect.height / small.height);
+      const sl = rect.left + ax * (rect.width - small.width * s2);
+      const st = rect.top + ay * (rect.height - small.height * s2);
+      out.small.push(frame(small, sl, st, s2, rect, radius, offset));
+    } else {
+      // The small copy shows the same part of the picture on top of it.
+      const ss = sb / k;
+      out.small.push(frame(small, bl + cropX * ss, bt + cropY * ss, ss, rect, radius, offset));
+    }
+  }
+  return out;
+}
+
 /**
  * Transform origin for scaling the background back: the horizontal centre of
  * its visible part and 30% down it, so a long scrolled page shrinks around
