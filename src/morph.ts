@@ -111,6 +111,12 @@ export interface MorphOptions extends Partial<Omit<MorphTiming, "duration" | "ea
   /** Fill the sheet for this card. Runs before anything is measured; may return a promise. */
   prepare?: (card: HTMLElement | null) => void | Promise<void>;
   onStateChange?: (state: MorphState, card: HTMLElement | null) => void;
+  /**
+   * Where a close without `to` lands. Receives the card the sheet opened
+   * from. Lets a caller follow a card that was re-rendered while the sheet
+   * was open. Default: that same card.
+   */
+  resolveCard?: (card: HTMLElement | null) => HTMLElement | null;
 }
 
 export interface CloseOptions {
@@ -228,7 +234,7 @@ function within(visible: Box | null, bounds: Box): Box | null {
   return visible ? intersect(visible, bounds) : null;
 }
 
-function resolveTiming(options: Partial<MorphOptions>, base: MorphTiming): MorphTiming {
+export function resolveTiming(options: Partial<MorphOptions>, base: MorphTiming): MorphTiming {
   return {
     duration: { ...base.duration, ...options.duration },
     easing: { ...base.easing, ...options.easing },
@@ -274,6 +280,7 @@ export function createMorph(options: MorphOptions): Morph {
     shared: options.shared,
     radius: options.radius,
     scroller: options.scroller,
+    resolveCard: options.resolveCard,
   };
 
   let state: MorphState = "closed";
@@ -963,8 +970,15 @@ export function createMorph(options: MorphOptions): Morph {
   function close(opts?: CloseOptions): Promise<boolean> {
     if (destroyed || state === "closed") return Promise.resolve(state === "closed");
     if (state === "closing") return wait("closed");
-    const retarget = opts !== undefined && "to" in opts;
-    const target = retarget ? (opts.to ?? null) : current;
+    let retarget = opts !== undefined && "to" in opts;
+    let target = retarget ? (opts?.to ?? null) : current;
+    if (!retarget && hooks.resolveCard) {
+      const found = hooks.resolveCard(current);
+      if (found !== current) {
+        retarget = true;
+        target = found;
+      }
+    }
     if (state === "opening") {
       if (!run) {
         // Still preparing: nothing is on screen yet.
@@ -1022,6 +1036,7 @@ export function createMorph(options: MorphOptions): Morph {
         shared: "shared" in next ? next.shared : hooks.shared,
         radius: "radius" in next ? next.radius : hooks.radius,
         scroller: "scroller" in next ? next.scroller : hooks.scroller,
+        resolveCard: "resolveCard" in next ? next.resolveCard : hooks.resolveCard,
       };
     },
     destroy() {

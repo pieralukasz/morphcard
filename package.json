@@ -1,24 +1,26 @@
 {
-  "name": "morphcard",
+  "name": "react-morphcard",
   "version": "0.1.0",
-  "description": "React hook for a card that grows into a full detail screen and shrinks back, with shared elements flying between the two. Runs in any browser, installed PWAs and WebViews (not React Native). No dependencies besides React.",
+  "description": "React hook for a card that grows into a full detail screen and shrinks back, with shared elements flying between the two. Works in any modern browser, installed PWAs and WebViews. Not for React Native. No dependencies besides React.",
   "keywords": [
     "react",
     "react-hook",
+    "hook",
     "animation",
     "shared-element-transition",
     "card",
     "detail-view",
     "transition",
     "web-animations-api",
+    "nextjs",
     "pwa",
     "webview"
   ],
   "homepage": "https://morphcard.lucaspiera.com",
-  "bugs": "https://github.com/pieralukasz/morphcard/issues",
+  "bugs": "https://github.com/pieralukasz/react-morphcard/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pieralukasz/morphcard.git"
+    "url": "git+https://github.com/pieralukasz/react-morphcard.git"
   },
   "license": "MIT",
   "author": "Łukasz Piera (https://lucaspiera.com)",
@@ -46,11 +48,11 @@
     "prepare": "tsdown",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:e2e": "pnpm build && pnpm build:examples && playwright test",
+    "test": "tsdown && vitest run",
+    "test:e2e": "pnpm build:examples && playwright test",
     "serve": "pnpm build:examples && node scripts/serve.mjs",
     "check:package": "publint",
-    "prepublishOnly": "pnpm build && pnpm typecheck && pnpm test"
+    "prepublishOnly": "pnpm typecheck && pnpm test"
   },
   "peerDependencies": {
     "react": ">=18",

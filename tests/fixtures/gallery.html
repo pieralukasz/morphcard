@@ -16,7 +16,7 @@
   .sheet h2 { margin: 16px; font-size: 24px; line-height: 30px; }
   .scrim { position: fixed; inset: 0; background: rgb(0 0 0 / 0.4); }
 </style>
-<script type="importmap">{ "imports": { "morphcard": "/examples/dist/morphcard.js" } }</script>
+<script type="importmap">{ "imports": { "morphcard-engine": "/examples/dist/engine.js" } }</script>
 </head>
 <body>
 <main class="grid" id="grid"></main>
@@ -28,7 +28,7 @@
   <button data-morph-close data-morph-stagger style="margin: 16px">Close</button>
 </section>
 <script type="module">
-  import { createMorph } from "morphcard";
+  import { createMorph } from "morphcard-engine";
   const colors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7", "#e11d48", "#14b8a6"];
   const svg = (c) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="${c}"/><circle cx="200" cy="150" r="80" fill="white" fill-opacity="0.5"/></svg>`)}`;
   const grid = document.getElementById("grid");

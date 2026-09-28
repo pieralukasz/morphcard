@@ -1,5 +1,5 @@
 // The deliveries demo, in plain JavaScript, without a dependency on how
-// morphcard is loaded: mountDemo takes createMorph as an argument.
+// the engine is loaded: mountDemo takes createMorph as an argument.
 // examples/shared/demo.js wires it to the built package; the docs site passes the
 // source.
 import { deliveries, findDelivery, stages } from "./data.js";
