@@ -15,7 +15,9 @@ These came from a real app built with a View Transitions based version of the sa
 
 **What happened.** A detail opened from a deep link had no card on screen. On return, the list row was far below the fold. The heading flew in from, or out to, a point outside the viewport.
 
-**Rule.** A card counts as on screen when at least half its area is visible: inside the viewport, inside every ancestor that clips it, and under the sheet. Otherwise the plan is `card-offscreen` and the transition fades. `open(null)` is the deep-link case.
+**Rule.** A card that the reader can see, even only a strip of it cut off by the edge of the screen or of its list, grows from the part that shows and shrinks back into it. A card with no visible part (at least 8 px on each side, inside the viewport and every ancestor that clips it) gives `card-offscreen`, and the transition fades. `open(null)` is the deep-link case.
+
+A sheet smaller than the screen, such as a centred panel, may not cover the card. It then starts moved over the card and slides into its place while it grows, on the same curve, so the surface still starts on the card. Sheets with a `position: fixed` child are never moved, because a transform would drag that child; they only use the part of the card they cover.
 
 ## 3. Back that lingers
 

@@ -12,9 +12,9 @@
  *   stage.open(tileElement, { label: "Title", render: () => <Sheet… /> });
  *
  * On a wide screen the sheet is a centred panel; on a phone it fills the
- * screen. The panel is tall and fixed in size on purpose: the library only
- * flies from a card that lies inside the sheet's box, so the panel has to
- * cover the page column where the tiles are.
+ * screen. A card outside the panel's box (cut off at the bottom of the
+ * screen) still works: the library starts the panel moved over the card and
+ * slides it into place while it grows.
  */
 import { usePathname } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";

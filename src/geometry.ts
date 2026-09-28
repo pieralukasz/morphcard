@@ -67,6 +67,36 @@ export function isOnScreen(rect: Box, visible: Box | null, min = MIN_VISIBLE): b
   return visibleRatio(rect, visible) >= min;
 }
 
+export interface Shift {
+  x: number;
+  y: number;
+}
+
+export const NO_SHIFT: Shift = { x: 0, y: 0 };
+
+export function moveBox(b: Box, shift: Shift): Box {
+  return shift.x === 0 && shift.y === 0 ? b : box(b.left + shift.x, b.top + shift.y, b.width, b.height);
+}
+
+/**
+ * How far to move `outer` so that it covers `inner`, moving it as little as
+ * possible. When `inner` is larger on an axis, `outer` ends up inside it.
+ * Used for a sheet smaller than the screen (a centred panel) that must start
+ * over a card it does not cover.
+ */
+export function coverShift(inner: Box, outer: Box): Shift {
+  const axis = (a0: number, a1: number, b0: number, b1: number) => {
+    if (a0 >= b0 && a1 <= b1) return 0;
+    if (a1 - a0 <= b1 - b0) return a0 < b0 ? a0 - b0 : a1 - b1;
+    if (b0 >= a0 && b1 <= a1) return 0;
+    return b0 < a0 ? a0 - b0 : a1 - b1;
+  };
+  return {
+    x: axis(inner.left, inner.left + inner.width, outer.left, outer.left + outer.width),
+    y: axis(inner.top, inner.top + inner.height, outer.top, outer.top + outer.height),
+  };
+}
+
 function px(n: number): string {
   // Round to 0.01px so keyframes stay readable and stable in tests.
   return `${Math.round(n * 100) / 100}px`;

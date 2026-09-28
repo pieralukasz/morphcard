@@ -14,6 +14,9 @@
   .sheet { position: fixed; inset: 0; background: #fff; overflow: auto; }
   .sheet img { display: block; width: 100%; aspect-ratio: 4 / 3; }
   .wide .sheet > img { aspect-ratio: 16 / 9; }
+  /* A centred panel, smaller than the screen, over a page that scrolls. */
+  .panel .sheet { inset: 0; margin: auto; width: 60%; height: 60%; border-radius: 16px; }
+  .panel body { padding: 100vh 0; }
   img { object-fit: cover; }
   .sheet h2 { margin: 16px; font-size: 24px; line-height: 30px; }
   .scrim { position: fixed; inset: 0; background: rgb(0 0 0 / 0.4); }
@@ -34,6 +37,7 @@
   const colors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7", "#e11d48", "#14b8a6"];
   const svg = (c) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="${c}"/><circle cx="200" cy="150" r="80" fill="white" fill-opacity="0.5"/></svg>`)}`;
   if (location.search.includes("wide")) document.documentElement.classList.add("wide");
+  if (location.search.includes("panel")) document.documentElement.classList.add("panel");
   const grid = document.getElementById("grid");
   grid.innerHTML = colors.map((c, i) => `<button class="tile" data-i="${i}"><img data-morph="photo" alt="Photo ${i + 1}" src="${svg(c)}"><div class="cap" data-morph="title">Photo ${i + 1}</div></button>`).join("");
   const sheet = document.getElementById("sheet");

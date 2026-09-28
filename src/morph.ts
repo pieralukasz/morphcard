@@ -16,6 +16,10 @@ import {
   insetClip,
   intersect,
   isOnScreen,
+  moveBox,
+  coverShift,
+  NO_SHIFT,
+  type Shift,
   parseRadius,
   placeOver,
   planPair,
@@ -212,6 +216,12 @@ interface Geometry {
   /** The visible part of the card: where the surface starts and ends. */
   clipBox: Box;
   sheetBox: Box;
+  /**
+   * Where the sheet starts (open) or ends (close), relative to its place:
+   * non-zero when the sheet at rest does not cover the card. cardBox,
+   * clipBox and the pairs' srcBox are given relative to the moved sheet.
+   */
+  shift: Shift;
   /** Screen pixels per CSS pixel of the sheet; boxes above are in CSS pixels. */
   unit: number;
   radius: number;
@@ -237,8 +247,11 @@ function settleTransitions(card: HTMLElement) {
   }
 }
 
-function within(visible: Box | null, bounds: Box): Box | null {
-  return visible ? intersect(visible, bounds) : null;
+/** Smallest visible strip of a card, in px, that a flight starts from or lands on. */
+const MIN_SEEN = 8;
+
+function isSeen(b: Box | null): b is Box {
+  return b !== null && b.width >= MIN_SEEN && b.height >= MIN_SEEN;
 }
 
 export function resolveTiming(options: Partial<MorphOptions>, base: MorphTiming): MorphTiming {
@@ -435,6 +448,7 @@ export function createMorph(options: MorphOptions): Morph {
     let reason: SkipReason | undefined;
     let cardBox = ZERO;
     let clipBox = ZERO;
+    let shift = NO_SHIFT;
     if (isReduced) reason = "reduced-motion";
     else if (!card || !card.isConnected) reason = "no-card";
     else if (area(sheetBox) === 0) reason = "sheet-hidden";
@@ -442,13 +456,25 @@ export function createMorph(options: MorphOptions): Morph {
       // A press effect (scale on :active) would shrink the measured card.
       settleTransitions(card);
       cardBox = rectOf(card);
-      // Never fly from (or back to) a card the reader cannot see. The flight
-      // is drawn inside the sheet, so only the part of the card under it counts.
-      const seen = within(visibleBoxOf(card), sheetBox);
-      if (!isOnScreen(cardBox, seen)) reason = "card-offscreen";
-      // The surface starts as the part of the card the reader sees, not the
-      // part hidden under a toolbar or the list's edge.
-      else clipBox = intersect(cardBox, seen as Box) ?? cardBox;
+      // Never fly from (or back to) a card the reader cannot see at all. A
+      // card the reader can click, even one cut off by the edge of the
+      // screen or of its list, grows from the part that shows.
+      const view = visibleBoxOf(card);
+      const shown = view ? intersect(cardBox, view) : null;
+      if (!isSeen(shown)) reason = "card-offscreen";
+      else {
+        // The flight is drawn inside the sheet. A sheet smaller than the
+        // screen (a centred panel) may not cover the card: it then starts
+        // moved over the card and slides into place while it grows. A
+        // transform would drag position: fixed children, so those sheets
+        // only use the part of the card under them.
+        if (!hasFixedDescendant(sheet)) shift = coverShift(shown, sheetBox);
+        const under = intersect(shown as Box, moveBox(sheetBox, shift));
+        if (!isSeen(under)) reason = "card-offscreen";
+        // The surface starts as the part of the card the reader sees, not the
+        // part hidden under a toolbar or the list's edge.
+        else clipBox = under;
+      }
     }
     const pairs: PairGeometry[] =
       reason || !card
@@ -481,6 +507,12 @@ export function createMorph(options: MorphOptions): Morph {
       sheetRadius = parseRadius(sheetStyle.borderTopLeftRadius, sheetBox.width);
     }
 
+    // Everything is drawn inside the sheet, so boxes on the card side are
+    // given relative to where the sheet is when it covers the card.
+    const back = { x: -shift.x, y: -shift.y };
+    if (reason) shift = NO_SHIFT;
+    const local = reason ? pairs : pairs.map((p) => (p.mode === "skip" ? p : { ...p, srcBox: moveBox(p.srcBox, back) }));
+
     return {
       plan: {
         direction,
@@ -491,15 +523,16 @@ export function createMorph(options: MorphOptions): Morph {
         pairs: pairs.map(({ key, mode, reason: why }) => (why ? { key, mode, reason: why } : { key, mode })),
       },
       card: reason ? null : card,
-      cardBox,
-      clipBox,
+      cardBox: moveBox(cardBox, back),
+      clipBox: moveBox(clipBox, back),
       sheetBox,
+      shift,
       unit,
       radius,
       sheetRadius,
       colors,
       border,
-      pairs,
+      pairs: local,
     };
   }
 
@@ -594,6 +627,19 @@ export function createMorph(options: MorphOptions): Morph {
     return { root: ghost, copies, rest };
   }
 
+  /**
+   * A sheet that does not cover the card at rest (a centred panel) starts
+   * moved over it and slides into place while it grows, on the same curve,
+   * so the surface and every flight follow the same path on screen as with
+   * a sheet that covers the card.
+   */
+  function slide(r: Run, g: Geometry, duration: number, back: boolean) {
+    if (g.shift.x === 0 && g.shift.y === 0) return;
+    const moved = { translate: `${g.shift.x}px ${g.shift.y}px` };
+    const home = { translate: "0px 0px" };
+    play(r, sheet, back ? [home, moved] : [moved, home], duration, 0, timing.easing.surface);
+  }
+
   function recede(r: Run, duration: number, back: boolean, isReduced: boolean) {
     if (background && session?.scaled && !isReduced) {
       const still = { transform: "none", transformOrigin: session.origin };
@@ -627,6 +673,8 @@ export function createMorph(options: MorphOptions): Morph {
     if (g.colors) play(r, sheet, [{ backgroundColor: g.colors[0] }, { backgroundColor: g.colors[1] }], D, 0, surface);
 
     const ghost = makeGhost(r, g);
+    // After the ghost is placed: it is measured against the sheet at rest.
+    slide(r, g, D, false);
     for (const p of g.pairs) {
       if (p.mode === "skip" || !p.dst) {
         // Nothing to fly from: appear once the flights around it have landed.
@@ -699,6 +747,7 @@ export function createMorph(options: MorphOptions): Morph {
     if (g.colors) play(r, sheet, [{ backgroundColor: g.colors[1] }, { backgroundColor: g.colors[0] }], C, 0, surface);
 
     const ghost = makeGhost(r, g);
+    slide(r, g, C, true);
     let anchor: PairGeometry | null = null;
     for (const p of g.pairs) {
       if (p.mode === "skip" || !p.dst) {

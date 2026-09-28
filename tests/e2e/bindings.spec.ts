@@ -109,4 +109,56 @@ test.describe("images", () => {
     expect(await page.locator("[data-morph-ghost]").count()).toBe(0);
     void errors;
   });
+
+  test("a card cut off by the screen edge, outside a centred panel, still grows from the part you see", async ({ page, errors }) => {
+    await page.goto("/tests/fixtures/gallery.html?panel");
+    await page.waitForSelector("html[data-ready]", { state: "attached" });
+    // Leave only the top 40% of a second-row tile above the bottom edge: below the panel's box.
+    await page.evaluate(() => {
+      const r = document.querySelectorAll(".tile")[4]!.getBoundingClientRect();
+      window.scrollBy({ top: r.top - (innerHeight - r.height * 0.4), behavior: "instant" });
+    });
+    // What the reader sees of the tile, and of the sheet (its box cut by its clip-path).
+    const seen = () =>
+      page.evaluate(() => {
+        const r = document.querySelectorAll(".tile")[4]!.getBoundingClientRect();
+        const tileShown = [r.left, Math.max(0, r.top), r.right, Math.min(innerHeight, r.bottom)];
+        const sheet = document.getElementById("sheet")!;
+        const b = sheet.getBoundingClientRect();
+        const m = /inset\(([^)]*)\)/.exec(getComputedStyle(sheet).clipPath);
+        const v = (m?.[1] ?? "0px").split(" round ")[0]?.trim().split(/\s+/).map(Number.parseFloat) ?? [0];
+        const t = v[0] ?? 0;
+        const rt = v[1] ?? t;
+        const bt = v[2] ?? t;
+        const l = v[3] ?? rt;
+        return { tile: tileShown, sheet: [b.left + l, b.top + t, b.right - rt, b.bottom - bt], panel: [b.left, b.top, b.right, b.bottom] };
+      });
+    const near = (a: number[], b: number[]) => a.every((n, i) => Math.abs(n - (b[i] ?? 0)) <= 1);
+    const before = await seen();
+
+    // A mouse click where the reader sees the tile: locator.click() would scroll it into view first.
+    const [x, y] = [(before.tile[0] ?? 0) + 20, (before.tile[1] ?? 0) + 10];
+    await page.mouse.click(x, y);
+    expect(await page.evaluate(() => window.morph.plan)).toMatchObject({ choreography: "morph" });
+    await pauseAt(page, 0);
+    const start = await seen();
+    expect(near(start.sheet, start.tile), `open starts on the tile: ${JSON.stringify(start)}`).toBe(true);
+    await resume(page);
+    await page.waitForFunction(() => window.morph.state === "open");
+    // The tile's visible part lies outside the panel's own box, so the panel
+    // started moved over it; at rest it is back in its place, untouched.
+    const open = await seen();
+    expect(before.tile[1] ?? 0).toBeGreaterThan(open.panel[3] ?? 0);
+    expect(await page.evaluate(() => getComputedStyle(document.getElementById("sheet")!).translate)).toBe("none");
+
+    await page.getByRole("button", { name: "Close" }).click();
+    expect(await page.evaluate(() => window.morph.plan)).toMatchObject({ choreography: "morph" });
+    await pauseAt(page, 299);
+    const end = await seen();
+    expect(near(end.sheet, end.tile), `close ends on the tile: ${JSON.stringify(end)}`).toBe(true);
+    await resume(page);
+    await page.waitForFunction(() => window.morph.state === "closed");
+    expect(await page.locator("[data-morph-ghost]").count()).toBe(0);
+    void errors;
+  });
 });

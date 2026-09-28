@@ -3,6 +3,7 @@ import {
   ASPECT_TOLERANCE,
   backgroundOrigin,
   box,
+  coverShift,
   fillFrames,
   fullClip,
   insetClip,
@@ -287,5 +288,24 @@ describe("fillFrames: a picture that changes shape", () => {
 
   it("returns nothing for a picture without a size", () => {
     expect(fillFrames({ big: box(0, 0, 0, 10), small, from: small, to: big })).toEqual({ big: [], small: [] });
+  });
+});
+
+describe("coverShift: move a centred panel over a card it does not cover", () => {
+  const panel = box(280, 68, 880, 765);
+  it("does not move a panel that already covers the card", () => {
+    expect(coverShift(box(300, 100, 200, 200), panel)).toEqual({ x: 0, y: 0 });
+  });
+  it("moves down by just enough for a card cut off at the bottom edge", () => {
+    // The visible strip of a card at the bottom of a 900 px screen.
+    expect(coverShift(box(300, 860, 266, 40), panel)).toEqual({ x: 0, y: 900 - 833 });
+  });
+  it("moves sideways and up for a card left of and above the panel", () => {
+    expect(coverShift(box(20, 10, 200, 100), panel)).toEqual({ x: -260, y: -58 });
+  });
+  it("lands inside a card larger than the panel", () => {
+    const big = box(0, 0, 1440, 900);
+    const s = coverShift(big, box(-100, 50, 400, 300));
+    expect(s).toEqual({ x: 100, y: 0 });
   });
 });
