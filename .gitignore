@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+*.tsbuildinfo
+*.tgz
+.DS_Store
+.vercel
+.env*
+tests/fixtures/react/dist/
+recordings/
+screenshots/

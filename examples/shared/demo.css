@@ -1,0 +1,689 @@
+/*
+ * Styles for the morphcard deliveries demo. Everything is scoped under
+ * .mc-demo so the same file works in the example page and inside the docs.
+ *
+ * Layouts:
+ *   .mc-demo.is-page   the list scrolls with the window, the sheet is fixed
+ *   .mc-demo.is-frame  a phone-sized frame: the list scrolls inside it
+ *   .mc-demo.is-wide   wider than 768px: top navigation, centred columns
+ */
+
+.mc-demo {
+  --mc-page: #f3f5f8;
+  --mc-card: #ffffff;
+  --mc-sunken: #eceff4;
+  --mc-overlay: rgb(15 23 42 / 0.42);
+  --mc-text: #0f172a;
+  --mc-text-2: #4b5870;
+  --mc-muted: #5f6b80;
+  --mc-border: #d9dfe8;
+  --mc-border-strong: #b7c1d0;
+  --mc-focus: #4f46e5;
+  --mc-action: #111827;
+  --mc-action-text: #ffffff;
+  --mc-soft: #e8ecf3;
+  --mc-ok: #166534;
+  --mc-ok-bg: #e7f5ec;
+  --mc-scheduled-bg: #eef0f4;
+  --mc-scheduled: #475569;
+  --mc-transit-bg: #ecebfd;
+  --mc-transit: #4338ca;
+  --mc-delivered-bg: #e6f4ea;
+  --mc-delivered: #166534;
+  --mc-delayed-bg: #fdf1dc;
+  --mc-delayed: #8a4b0f;
+  --mc-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px rgb(15 23 42 / 0.05);
+  --mc-radius: 16px;
+  --mc-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mc-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --mc-bar: 60px;
+
+  color: var(--mc-text);
+  background: var(--mc-page);
+  font-family: var(--mc-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: left;
+}
+
+:root[data-theme="dark"] .mc-demo,
+.dark .mc-demo,
+.mc-demo.is-dark {
+  --mc-page: #0b1017;
+  --mc-card: #151c26;
+  --mc-sunken: #1c2531;
+  --mc-overlay: rgb(2 6 12 / 0.62);
+  --mc-text: #e8edf4;
+  --mc-text-2: #a3afc0;
+  --mc-muted: #8995a7;
+  --mc-border: #263140;
+  --mc-border-strong: #3d4b5e;
+  --mc-focus: #8b85f5;
+  --mc-action: #e8edf4;
+  --mc-action-text: #0b1017;
+  --mc-soft: #1b2430;
+  --mc-ok: #86d19f;
+  --mc-ok-bg: #132a1c;
+  --mc-scheduled-bg: #1d2632;
+  --mc-scheduled: #a3afc0;
+  --mc-transit-bg: #1e1d40;
+  --mc-transit: #aeaaf9;
+  --mc-delivered-bg: #13291b;
+  --mc-delivered: #86d19f;
+  --mc-delayed-bg: #2e2210;
+  --mc-delayed: #e7b877;
+  --mc-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 12px rgb(0 0 0 / 0.25);
+}
+
+.mc-demo *,
+.mc-demo *::before,
+.mc-demo *::after {
+  box-sizing: border-box;
+}
+
+.mc-demo button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.mc-demo [hidden] {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------- chrome */
+
+.mc-demo .mc-topbar {
+  z-index: 5;
+  height: var(--mc-bar);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: var(--mc-card);
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.mc-demo .mc-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--mc-action);
+  color: var(--mc-action-text);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.mc-demo .mc-brand {
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.mc-demo .mc-topnav {
+  display: none;
+  gap: 4px;
+  margin-left: 20px;
+}
+
+.mc-demo .mc-topnav span {
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-size: 14px;
+  color: var(--mc-text-2);
+}
+
+.mc-demo .mc-topnav span.on {
+  background: var(--mc-soft);
+  color: var(--mc-text);
+  font-weight: 600;
+}
+
+.mc-demo .mc-avatar {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mc-soft);
+  color: var(--mc-text-2);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mc-demo .mc-tabbar {
+  z-index: 3;
+  height: 64px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  text-align: center;
+  background: var(--mc-card);
+  border-top: 1px solid var(--mc-border);
+  font-size: 11px;
+  color: var(--mc-text-2);
+}
+
+.mc-demo .mc-tabbar .on {
+  color: var(--mc-text);
+  font-weight: 600;
+}
+
+.mc-demo .mc-tabbar svg {
+  display: block;
+  margin: 0 auto 2px;
+  width: 22px;
+  height: 22px;
+}
+
+/* ------------------------------------------------------------------ list */
+
+.mc-demo .mc-screen {
+  padding: 20px 16px 24px;
+}
+
+.mc-demo .mc-screen h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+}
+
+.mc-demo .mc-sub {
+  margin: 4px 0 16px;
+  color: var(--mc-text-2);
+  font-size: 14px;
+}
+
+.mc-demo .mc-search {
+  height: 44px;
+  border-radius: 12px;
+  background: var(--mc-sunken);
+  color: var(--mc-muted);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  margin-bottom: 14px;
+}
+
+.mc-demo .mc-filters {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+  color: var(--mc-text-2);
+  border-bottom: 1px solid var(--mc-border);
+  margin-bottom: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mc-demo .mc-filters span {
+  padding: 8px 0 10px;
+}
+
+.mc-demo .mc-filters span.on {
+  color: var(--mc-text);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--mc-action);
+}
+
+.mc-demo .mc-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mc-demo .mc-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-card);
+  box-shadow: var(--mc-shadow);
+  transition:
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 200ms ease;
+}
+
+.mc-demo .mc-card:active {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mc-demo .mc-card:hover {
+    box-shadow: 0 2px 4px rgb(15 23 42 / 0.08), 0 8px 20px rgb(15 23 42 / 0.08);
+  }
+}
+
+.mc-demo .mc-card-hit {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.mc-demo .mc-card-hit:focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: 2px;
+}
+
+.mc-demo .mc-card-main {
+  min-width: 0;
+  pointer-events: none;
+}
+
+.mc-demo .mc-card-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/*
+ * The route is sized in em, so the heading on the detail screen is the same
+ * route in a bigger font and the flight is a pure scale.
+ */
+.mc-demo .mc-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.1333em 0.4em;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.3333;
+  letter-spacing: -0.01em;
+  width: max-content;
+  max-width: 100%;
+}
+
+.mc-demo .mc-leg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  white-space: nowrap;
+}
+
+.mc-demo .mc-route i {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.6667em;
+  line-height: 1.4;
+  padding: 0 0.4em;
+  border: 1px solid var(--mc-border);
+  border-radius: 0.4em;
+  color: var(--mc-text-2);
+  letter-spacing: 0;
+}
+
+.mc-demo .mc-route svg {
+  width: 1.0667em;
+  height: 1.0667em;
+  flex: none;
+}
+
+.mc-demo .mc-party {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--mc-text-2);
+  margin-top: 2px;
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mc-demo .mc-ref {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--mc-text-2);
+  letter-spacing: 0.02em;
+  width: max-content;
+}
+
+.mc-demo .mc-meta {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--mc-text-2);
+  margin-top: 2px;
+}
+
+.mc-demo .mc-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  width: max-content;
+  white-space: nowrap;
+}
+
+.mc-demo .mc-badge.scheduled {
+  background: var(--mc-scheduled-bg);
+  color: var(--mc-scheduled);
+}
+
+.mc-demo .mc-badge.transit {
+  background: var(--mc-transit-bg);
+  color: var(--mc-transit);
+}
+
+.mc-demo .mc-badge.delivered {
+  background: var(--mc-delivered-bg);
+  color: var(--mc-delivered);
+}
+
+.mc-demo .mc-badge.delayed {
+  background: var(--mc-delayed-bg);
+  color: var(--mc-delayed);
+}
+
+.mc-demo .mc-ico {
+  width: 20px;
+  height: 20px;
+  color: var(--mc-text-2);
+}
+
+/* ----------------------------------------------------------------- sheet */
+
+.mc-demo .mc-scrim {
+  z-index: 6;
+  background: var(--mc-overlay);
+}
+
+.mc-demo .mc-sheet {
+  z-index: 7;
+  background: var(--mc-card);
+  color: var(--mc-text);
+}
+
+.mc-demo .mc-sheet-scroll {
+  position: absolute;
+  inset: 0 0 76px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px 20px 24px;
+}
+
+.mc-demo .mc-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  font-size: 15px;
+  color: var(--mc-text-2);
+  margin-left: -4px;
+  padding: 0 6px 0 4px;
+  border-radius: 8px;
+}
+
+.mc-demo .mc-back:focus-visible {
+  outline: 2px solid var(--mc-focus);
+}
+
+.mc-demo .mc-head {
+  margin: 8px 0 20px;
+}
+
+.mc-demo .mc-head .mc-route {
+  font-size: 24px;
+}
+
+.mc-demo .mc-head .mc-party {
+  margin-top: 4px;
+  white-space: normal;
+}
+
+.mc-demo .mc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.mc-demo .mc-block {
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: var(--mc-card);
+}
+
+.mc-demo .mc-block h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mc-muted);
+  font-weight: 700;
+}
+
+.mc-demo .mc-stages {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.mc-demo .mc-stages div {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--mc-sunken);
+}
+
+.mc-demo .mc-stages div.done {
+  background: var(--mc-action);
+}
+
+.mc-demo .mc-stage-labels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--mc-muted);
+}
+
+.mc-demo .mc-stage-labels .on {
+  color: var(--mc-text);
+  font-weight: 600;
+}
+
+.mc-demo .mc-stop {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--mc-border);
+  font-size: 14px;
+}
+
+.mc-demo .mc-stop:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.mc-demo .mc-stop time {
+  font-family: var(--mc-mono);
+  font-size: 13px;
+  color: var(--mc-text-2);
+}
+
+.mc-demo .mc-stop small {
+  display: block;
+  color: var(--mc-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.mc-demo .mc-pill {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--mc-border-strong);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.mc-demo .mc-pill.ok {
+  border-color: transparent;
+  background: var(--mc-ok-bg);
+  color: var(--mc-ok);
+}
+
+.mc-demo .mc-kv {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 6px 12px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.mc-demo .mc-kv dt {
+  color: var(--mc-muted);
+}
+
+.mc-demo .mc-kv dd {
+  margin: 0;
+}
+
+.mc-demo .mc-actions {
+  position: absolute;
+  inset: auto 0 0;
+  height: 76px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 16px 8px;
+  border-top: 1px solid var(--mc-border);
+  background: var(--mc-card);
+}
+
+.mc-demo .mc-actions .mc-pill {
+  height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.mc-demo .mc-actions .primary {
+  margin-left: auto;
+  background: var(--mc-action);
+  color: var(--mc-action-text);
+  border-color: var(--mc-action);
+}
+
+/* --------------------------------------------------------------- layouts */
+
+/* Page: the window scrolls, the bars and the sheet are fixed. */
+.mc-demo.is-page {
+  min-height: 100vh;
+  padding-bottom: 64px;
+}
+
+.mc-demo.is-page .mc-topbar {
+  position: sticky;
+  top: 0;
+}
+
+.mc-demo.is-page .mc-tabbar {
+  position: fixed;
+  inset: auto 0 0;
+}
+
+.mc-demo.is-page .mc-scrim {
+  position: fixed;
+  inset: var(--mc-bar) 0 0;
+}
+
+.mc-demo.is-page .mc-sheet {
+  position: fixed;
+  inset: var(--mc-bar) 0 0;
+}
+
+/* Frame: a box sized by the page (give it a height); the list scrolls inside it. */
+.mc-demo.is-frame {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.mc-demo.is-frame .mc-topbar {
+  position: absolute;
+  inset: 0 0 auto;
+}
+
+.mc-demo.is-frame .mc-screen {
+  position: absolute;
+  inset: var(--mc-bar) 0 64px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.mc-demo.is-frame .mc-tabbar {
+  position: absolute;
+  inset: auto 0 0;
+}
+
+.mc-demo.is-frame .mc-scrim,
+.mc-demo.is-frame .mc-sheet {
+  position: absolute;
+  inset: var(--mc-bar) 0 0;
+}
+
+/* Wide: navigation in the top bar, list and detail in centred columns. */
+.mc-demo.is-wide .mc-topnav {
+  display: flex;
+}
+
+.mc-demo.is-wide .mc-tabbar {
+  display: none;
+}
+
+.mc-demo.is-wide.is-page {
+  padding-bottom: 0;
+}
+
+.mc-demo.is-wide.is-frame .mc-screen {
+  bottom: 0;
+}
+
+.mc-demo.is-wide .mc-screen {
+  padding: 32px max(24px, calc((100% - 760px) / 2));
+}
+
+.mc-demo.is-wide .mc-card {
+  padding: 18px 22px;
+}
+
+.mc-demo.is-wide .mc-sheet-scroll {
+  padding: 20px max(24px, calc((100% - 760px) / 2)) 24px;
+}
+
+.mc-demo.is-wide .mc-actions {
+  padding: 0 max(24px, calc((100% - 760px) / 2)) 8px;
+}
+
+.mc-demo.is-wide .mc-head .mc-route {
+  font-size: 30px;
+}

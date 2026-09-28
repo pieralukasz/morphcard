@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>morphcard · gallery fixture</title>
+<style>
+  html, body { margin: 0; font: 14px/1.4 system-ui, sans-serif; }
+  [hidden] { display: none !important; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
+  .tile { position: relative; border-radius: 12px; overflow: hidden; background: #fff; border: 0; padding: 0; }
+  .tile img { display: block; width: 100%; aspect-ratio: 4 / 3; }
+  .tile .cap { padding: 6px 8px; font-size: 12px; line-height: 16px; text-align: left; }
+  .sheet { position: fixed; inset: 0; background: #fff; overflow: auto; }
+  .sheet img { display: block; width: 100%; aspect-ratio: 4 / 3; }
+  .sheet h2 { margin: 16px; font-size: 24px; line-height: 30px; }
+  .scrim { position: fixed; inset: 0; background: rgb(0 0 0 / 0.4); }
+</style>
+<script type="importmap">{ "imports": { "morphcard": "/dist/index.js" } }</script>
+</head>
+<body>
+<main class="grid" id="grid"></main>
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-label="Photo">
+  <img data-morph="photo" alt="">
+  <h2 data-morph="title"></h2>
+  <p data-morph-stagger style="margin: 0 16px">Shot on a clear morning.</p>
+  <button data-morph-close data-morph-stagger style="margin: 16px">Close</button>
+</section>
+<script type="module">
+  import { createMorph } from "morphcard";
+  const colors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7", "#e11d48", "#14b8a6"];
+  const svg = (c) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="${c}"/><circle cx="200" cy="150" r="80" fill="white" fill-opacity="0.5"/></svg>`)}`;
+  const grid = document.getElementById("grid");
+  grid.innerHTML = colors.map((c, i) => `<button class="tile" data-i="${i}"><img data-morph="photo" alt="Photo ${i + 1}" src="${svg(c)}"><div class="cap" data-morph="title">Photo ${i + 1}</div></button>`).join("");
+  const sheet = document.getElementById("sheet");
+  window.morph = createMorph({
+    sheet,
+    background: grid,
+    scrim: document.getElementById("scrim"),
+    prepare(tile) {
+      const i = Number(tile?.dataset.i ?? 0);
+      sheet.querySelector("img").src = svg(colors[i]);
+      sheet.querySelector("h2").textContent = `Photo ${i + 1}`;
+    },
+  });
+  grid.addEventListener("click", (e) => {
+    const tile = e.target.closest(".tile");
+    if (tile) window.morph.open(tile);
+  });
+  document.documentElement.dataset.ready = "1";
+</script>
+</body>
+</html>
