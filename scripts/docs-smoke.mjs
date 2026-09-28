@@ -16,10 +16,14 @@ const pages = [
   "/docs/recipes",
   "/docs/view-transitions",
   "/llms.txt",
-  "/api/search",
 ];
 
-const browser = await chromium.launch();
+// RESOLVE="host:ip" pins a hostname for a freshly created DNS record the local
+// resolver has not picked up yet.
+const resolve = process.env.RESOLVE?.split(":");
+const browser = await chromium.launch({
+  args: resolve ? [`--host-resolver-rules=MAP ${resolve[0]} ${resolve[1]}`] : [],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(`${page.url()}: ${e.message}`));
@@ -35,6 +39,24 @@ for (const path of pages) {
   const res = await page.goto(base + path, { waitUntil: "networkidle", timeout: 60000 });
   results.push(`${res?.status()} ${path}`);
 }
+
+// The search index is a static file without an extension; hosts may serve it
+// as a download, so fetch it rather than navigate to it.
+const index = await page.evaluate(async () => {
+  const r = await fetch("/api/search");
+  return { status: r.status, type: r.ok ? JSON.parse(await r.text()).type : undefined };
+});
+results.push(`${index.type ? 200 : index.status} /api/search`);
+
+// Search from the UI finds a page.
+await page.goto(`${base}/docs`, { waitUntil: "networkidle" });
+await page.locator("button[data-search-full]").click();
+const input = page.locator("[role=dialog]:not(.mc-sheet) input").first();
+await input.fill("reduced motion");
+const hit = page.locator("[role=dialog]:not(.mc-sheet) button", { hasText: "Accessibility" }).first();
+await hit.waitFor({ timeout: 15000 });
+const search = (await hit.innerText()).replace(/\s+/g, " ").slice(0, 60);
+await page.keyboard.press("Escape");
 
 // The live demo: open a card, check the sheet, close it.
 await page.goto(`${base}/`, { waitUntil: "networkidle" });
@@ -59,6 +81,6 @@ const videos = await page.evaluate(async () => {
   return out;
 });
 
-console.log(JSON.stringify({ results, demo: { heading, leftovers }, videos, errors }, null, 2));
+console.log(JSON.stringify({ results, search, demo: { heading, leftovers }, videos, errors }, null, 2));
 await browser.close();
 if (errors.length || results.some((r) => !r.startsWith("200")) || videos.some((v) => !v.startsWith("200"))) process.exit(1);
