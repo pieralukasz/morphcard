@@ -37,7 +37,7 @@ export default function HomePage() {
   return (
     <main className="flex flex-col">
       <section className="mc-glow">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-16 lg:grid-cols-[1fr_auto]">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-16 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_390px]">
           <div className="max-w-xl">
             <span className="mb-5 inline-block rounded-full border bg-fd-card px-3 py-1 text-xs font-medium text-fd-muted-foreground">
               Open source · MIT · No dependencies

@@ -56,18 +56,27 @@ export function LiveDemo({ controls = true }: { controls?: boolean }) {
   }, [slow, reduce]);
 
   return (
-    <div className="not-prose flex flex-col items-center gap-3">
+    <div className="not-prose flex w-full flex-col items-center gap-3">
       <div className="mc-device" ref={host} data-live-demo />
       {controls ? (
-        <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+        <div className="flex w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-2 text-sm">
           <Toggle on={slow} onClick={() => setSlow((v) => !v)}>
             4× slower
           </Toggle>
           <Toggle on={reduce} onClick={() => setReduce((v) => !v)}>
             Reduced motion
           </Toggle>
-          <span className="text-fd-muted-foreground tabular-nums" aria-live="polite">
-            state: <code>{state}</code>
+          {/*
+            The slot is as wide as its longest value ("closing"), so the row
+            never reflows while the demo animates.
+          */}
+          <span className="inline-grid justify-items-start text-fd-muted-foreground tabular-nums">
+            <span aria-hidden="true" className="invisible col-start-1 row-start-1">
+              state: <code>closing</code>
+            </span>
+            <span className="col-start-1 row-start-1" aria-live="polite">
+              state: <code>{state}</code>
+            </span>
           </span>
         </div>
       ) : null}
