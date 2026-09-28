@@ -796,3 +796,345 @@
 .mc-press:active {
   transform: scale(0.97);
 }
+
+/* ------------------------------------------------------------ playground */
+
+.mcp {
+  display: grid;
+  gap: 32px;
+  margin: 1.5rem 0;
+}
+
+.mcp-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 18px 28px;
+  padding: 20px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: var(--mcs-radius);
+  background: var(--color-fd-card);
+}
+
+.mcp-group {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mcp-group legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mcp-group.is-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcp-group.is-row legend {
+  float: left;
+  width: 100%;
+}
+
+.mcp-range,
+.mcp-select {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.mcp-select {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.mcp-label {
+  font-weight: 500;
+}
+
+.mcp-range input {
+  width: 100%;
+  accent-color: var(--color-fd-primary);
+}
+
+.mcp-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.mcp-value small {
+  color: var(--color-fd-muted-foreground);
+}
+
+.mcp-select select {
+  width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 8px;
+  background: var(--color-fd-background);
+  color: var(--color-fd-foreground);
+  font-size: 13px;
+}
+
+.mcp-reset {
+  margin-left: auto;
+}
+
+.mcp-code {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 10px;
+  background: var(--color-fd-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+.mcp-heading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.mcp-help {
+  margin: 4px 0 14px;
+  font-size: 14px;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mcp-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+/* ------------------------------------------------------ anatomy timeline */
+
+.mct {
+  display: grid;
+  gap: 24px;
+  margin: 1.5rem 0 2rem;
+  container-type: inline-size;
+}
+
+@container (min-width: 780px) {
+  .mct-grid {
+    grid-template-columns: 390px minmax(0, 1fr);
+  }
+}
+
+.mct-grid {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+
+.mct-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: var(--mcs-radius);
+  background: var(--color-fd-card);
+}
+
+@container (min-width: 780px) {
+  .mct-panel {
+    position: sticky;
+    top: 24px;
+  }
+}
+
+.mct-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcp-seg {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 999px;
+  background: var(--color-fd-secondary);
+}
+
+.mcp-seg button {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mcp-seg button[aria-pressed="true"] {
+  background: var(--color-fd-card);
+  color: var(--color-fd-foreground);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+}
+
+.mct-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--color-fd-muted);
+  font-size: 13px;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mct-chart {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  --mct-name: 112px;
+  --mct-ms: 64px;
+}
+
+.mct-axis {
+  position: relative;
+  height: 16px;
+  margin: 0 var(--mct-ms) 0 var(--mct-name);
+  font-size: 10.5px;
+  color: var(--color-fd-muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.mct-axis span {
+  position: absolute;
+  top: 0;
+  translate: -50% 0;
+}
+
+.mct-row {
+  display: grid;
+  grid-template-columns: var(--mct-name) minmax(0, 1fr) var(--mct-ms);
+  align-items: center;
+  gap: 0;
+  font-size: 12.5px;
+}
+
+.mct-name {
+  padding-right: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mct-ms {
+  padding-left: 8px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-fd-muted-foreground);
+}
+
+.mct-track {
+  position: relative;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--color-fd-secondary);
+}
+
+.mct-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  opacity: 0.45;
+  background: var(--mct-c, var(--color-fd-primary));
+}
+
+.mct-bar[data-active] {
+  opacity: 1;
+}
+
+.mct-bar[data-kind="surface"] {
+  --mct-c: hsl(243 75% 59%);
+}
+
+.mct-bar[data-kind="fly"] {
+  --mct-c: hsl(199 85% 45%);
+}
+
+.mct-bar[data-kind="fade"] {
+  --mct-c: hsl(32 90% 52%);
+}
+
+.mct-bar[data-kind="content"] {
+  --mct-c: hsl(152 60% 40%);
+}
+
+/* The playhead, over the tracks only. */
+.mct-head {
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: calc(var(--mct-name) + (100% - var(--mct-name) - var(--mct-ms)) * var(--mct-p, 0));
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-fd-foreground);
+  pointer-events: none;
+}
+
+.mct-controls {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.mct-play {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--color-fd-primary);
+  color: var(--color-fd-primary-foreground);
+  transition: transform 160ms var(--mcs-ease-out);
+}
+
+.mct-play:active {
+  transform: scale(0.95);
+}
+
+.mct-scrub input {
+  width: 100%;
+  accent-color: var(--color-fd-primary);
+}
+
+.mct-time {
+  min-width: 92px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.mct-time small {
+  color: var(--color-fd-muted-foreground);
+}
+
+.mct-help {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-fd-muted-foreground);
+}

@@ -198,6 +198,7 @@ export function Timeline() {
 
   return (
     <div className="not-prose mct" ref={wrap}>
+      <div className="mct-grid">
       <LiveDemo
         controls={false}
         options={{ timeScale: 1, reducedMotion: allowMotion ? false : "system" }}
@@ -228,7 +229,7 @@ export function Timeline() {
           </p>
         ) : null}
 
-        <div className="mct-chart" style={{ ["--mct-t" as string]: pct(t) }}>
+        <div className="mct-chart" style={{ ["--mct-p" as string]: String(Math.min(1, t / scale)) }}>
           <div className="mct-axis" aria-hidden="true">
             {Array.from({ length: Math.floor(scale / 100) + 1 }, (_, i) => (
               <span key={i} style={{ left: pct(i * 100) }}>
@@ -291,6 +292,7 @@ export function Timeline() {
           </output>
         </div>
         <p className="mct-help">Drag to scrub. The demo is paused at that moment of a real transition, and the bars show what is moving.</p>
+      </div>
       </div>
     </div>
   );

@@ -103,15 +103,24 @@ export function MorphStage({
     };
   }, [covering]);
 
+  // With an inner background (the docs article), the library makes only that
+  // element inert. The sidebar and the table of contents must not take focus
+  // either while the sheet is up, so the whole page goes inert here. It
+  // becomes interactive again as soon as a close starts, like the library's
+  // own background, so focus can return to the card.
+  const wrapper = useRef<HTMLDivElement>(null);
+  const modal = morph.state === "opening" || morph.state === "open";
+  useEffect(() => {
+    const el = wrapper.current;
+    if (!background || !el) return;
+    el.inert = modal;
+  }, [background, modal]);
+
   return (
     <StageContext.Provider value={stage}>
-      {background ? (
-        children
-      ) : (
-        <div ref={backgroundRef} className={className}>
-          {children}
-        </div>
-      )}
+      <div ref={background ? wrapper : backgroundRef} className={className}>
+        {children}
+      </div>
       {host
         ? createPortal(
             <>
