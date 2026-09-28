@@ -22,7 +22,7 @@ export const repoUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}`;
 export const authorUrl = "https://lucaspiera.com";
 /** The docs site keeps its address; the package and repo are react-morphcard. */
 export const siteUrl = "https://morphcard.lucaspiera.com";
-export const install = `pnpm add github:${gitConfig.user}/${gitConfig.repo}`;
+export const install = "pnpm add react-morphcard";
 
 const getContentUrl = createGetUrl(docsContentRoute);
 

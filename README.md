@@ -20,10 +20,10 @@ A React hook for a card that grows into a full detail screen and shrinks back. T
 
 ## Install
 
-Not on npm yet. Install from GitHub:
-
 ```bash
-pnpm add github:pieralukasz/react-morphcard
+pnpm add react-morphcard
+# or
+npm install react-morphcard
 ```
 
 ## Use

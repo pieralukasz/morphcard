@@ -22,7 +22,7 @@ export const topics: Topic[] = [
     kicker: "Start",
     title: "Getting started",
     icon: icon("M5 12h14M13 6l6 6-6 6"),
-    summary: "Install from GitHub, add three elements, call useMorph.",
+    summary: "Install from npm, add three elements, call useMorph.",
     lead: "A list, a sheet and an optional scrim. Mark what should fly with data-morph and open the sheet from a card.",
     points: [
       "useMorph() gives you three refs, the state, and open(card, update).",
