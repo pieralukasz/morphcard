@@ -7,7 +7,7 @@
  * content) must not contain the sheet, and the sheet covers the navigation.
  *
  *   <MorphStage>…page…</MorphStage>              wraps the page in a background
- *   <MorphStage background="#nd-page">…</MorphStage>   uses an existing element
+ *   <MorphStage background="#article">…</MorphStage>   uses an existing element
  *   const stage = useStage();
  *   stage.open(tileElement, { label: "Title", render: () => <Sheet… /> });
  *
@@ -68,7 +68,7 @@ export function MorphStage({
 
   const { open: morphOpen, close: morphClose, backgroundRef } = morph;
 
-  // The docs layout owns its grid, so the article column is found by id and
+  // The docs layout owns its grid, so the article column is found by selector and
   // looked up again after every navigation.
   useEffect(() => {
     if (background) backgroundRef(document.querySelector<HTMLElement>(background));

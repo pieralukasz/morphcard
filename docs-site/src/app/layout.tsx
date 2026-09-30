@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { Provider } from "@/components/provider";
 import { appName, siteUrl as productionUrl, tagline } from "@/lib/shared";
 import "./global.css";
 
-const inter = Inter({
+const sans = Geist({
   subsets: ["latin", "latin-ext"],
+  variable: "--font-geist",
+});
+
+const mono = Geist_Mono({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-geist-mono",
 });
 
 /** DOCS_SITE_URL wins, then the Vercel production domain, then the public URL. */
@@ -27,7 +33,7 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
         <Provider>{children}</Provider>
       </body>

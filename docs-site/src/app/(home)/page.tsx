@@ -10,7 +10,7 @@ import { authorUrl, install, repoUrl } from "@/lib/shared";
 export default function HomePage() {
   return (
     <main className="flex flex-col">
-      <section className="mc-glow">
+      <section className="mc-dots border-b">
         <div className="mx-auto w-full max-w-[880px] px-6 pt-12 pb-14">
           <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
             <div>
@@ -65,7 +65,7 @@ export default function HomePage() {
 
       <Section eyebrow="Usage" title="Three refs and one call">
         <div className="mb-5 flex flex-wrap items-center gap-3">
-          <code className="rounded-lg border bg-fd-card px-3 py-2 text-sm">{install}</code>
+          <code className="rounded-lg border bg-fd-card px-3 py-2 font-mono text-sm">{install}</code>
           <span className="text-sm text-fd-muted-foreground">React 18 or 19. No other dependencies.</span>
         </div>
         <div className="mcs-grid is-code">
@@ -98,7 +98,7 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-5xl px-6 py-16">
         <div className="grid items-center gap-10 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_390px]">
           <div>
-            <p className="text-sm font-semibold text-fd-primary">Same hook, small screen</p>
+            <p className="mc-label font-medium text-fd-primary">Same hook, small screen</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight">In a mobile app or PWA</h2>
             <p className="mt-4 text-fd-muted-foreground">
               On a phone the sheet usually covers the whole screen under the app bar. This frame is a small deliveries
@@ -118,7 +118,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t py-10 text-center text-sm text-fd-muted-foreground">
+      <footer className="border-t py-10 text-center font-mono text-xs text-fd-muted-foreground">
         <p>
           Made by{" "}
           <a className="font-medium text-fd-foreground underline underline-offset-4" href={authorUrl}>
@@ -138,7 +138,7 @@ export default function HomePage() {
 function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: ReactNode }) {
   return (
     <section className="mx-auto w-full max-w-[880px] px-6 py-14">
-      <p className="text-sm font-semibold text-fd-primary">{eyebrow}</p>
+      <p className="mc-label font-medium text-fd-primary">{eyebrow}</p>
       <h2 className="mt-2 mb-8 text-3xl font-bold tracking-tight">{title}</h2>
       {children}
     </section>

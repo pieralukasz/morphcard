@@ -1,7 +1,14 @@
 @import "tailwindcss";
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
+@import "fumadocs-ui/css/generated/glass.css";
 @import "./morph.css";
+
+/* Geist for text, Geist Mono for code and small labels (set on <html> in layout.tsx). */
+@theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
 
 /* Indigo, matched to the demo's "In transit" badge. */
 @theme {
@@ -26,10 +33,22 @@ html > body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
-.mc-glow {
-  background:
-    radial-gradient(60% 50% at 50% 0%, hsla(243, 75%, 60%, 0.2), transparent 70%),
-    radial-gradient(40% 40% at 85% 20%, hsla(200, 80%, 50%, 0.12), transparent 70%);
+/* Home hero: a faint dot grid that fades out towards the content below. */
+.mc-dots {
+  background-image:
+    linear-gradient(to bottom, transparent 40%, var(--color-fd-background)),
+    radial-gradient(color-mix(in oklab, var(--color-fd-foreground) 16%, transparent) 1px, transparent 1.5px);
+  background-size:
+    100% 100%,
+    20px 20px;
+}
+
+/* Small uppercase labels: section eyebrows on the home page. */
+.mc-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* One-line steps are shorter than their 2rem number badge. */
